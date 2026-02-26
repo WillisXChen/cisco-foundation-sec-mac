@@ -1,4 +1,4 @@
-# Cisco Foundation-Sec 8B MacOS (雙語資安助手)
+# Cisco Foundation-Sec 8B 原生運行於 Apple Mac 晶片 (雙語資安助手)
 
 此專案是一個運行在 macOS (Apple Silicon M系列晶片) 上的雙語（中/英文）資安分析智慧助手。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，達成專業的資安日誌分析與 RAG (檢索增強生成) 應用。
 
