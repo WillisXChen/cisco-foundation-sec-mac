@@ -1,5 +1,7 @@
 # Cisco Foundation-Sec 8B Native on Apple Mac Silicon (Bilingual Security Assistant)
 
+[![English](https://img.shields.io/badge/English-blue?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-gray?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-gray?style=for-the-badge)](README.ja.md)
+
 This project is a bilingual (Chinese/English) security analysis smart assistant running on macOS (Apple Silicon M-series chips). By integrating [Chainlit](https://docs.chainlit.io/) to provide a modern interactive interface, and combining multiple Large Language Models (LLMs) with the Qdrant vector database, it achieves professional security log analysis and RAG (Retrieval-Augmented Generation) applications.
 
 ## Built With
