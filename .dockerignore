@@ -1,0 +1,6 @@
+models/
+venv/
+ai_env/
+qdrant_storage/
+__pycache__/
+*.gguf

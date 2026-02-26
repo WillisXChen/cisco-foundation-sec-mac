@@ -1,0 +1,6 @@
+qdrant_storage
+.DS_Store
+models
+.chainlit/
+__pycache__/
+ai_env/

@@ -1,0 +1,10 @@
+services:
+  cisco-foundation-sec-8b-macos-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: cisco-foundation-sec-8b-macos-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    restart: unless-stopped
