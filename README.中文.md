@@ -29,10 +29,11 @@
 ## 核心專案元件
 
 1. **前端介面**: 使用 Chainlit (`cisco_security_chainlit.py`) 構建對話式 AI 介面，支援即時文字串流與歷史對話。
-2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯。
+2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯，透過 Chainlit 地板語系支援 20+ 種語言。
 3. **資安專家**: 透過專為網宇安全領域微調的 **Foundation-Sec-8B**，進行深度的系統與資安日誌分析。
 4. **硬體加速**: 整合 macOS Metal (MPS) 與 `llama-cpp-python`，最大化 Apple Silicon 上的推論效能。
-5. **向量檢索 (RAG)**: 使用 **Qdrant** (透過 Docker 部署) 儲存並檢索企業內部資安文件，藉此提升語言模型的分析準確度並減少幻覺。
+5. **向量檢索 (RAG)**: 使用 **Qdrant** (透過 Docker 部署) 儲存並檢索資安 SOP 文件。系統現在支援啟動時**自動 RAG 同步**。
+6. **優質使用者體驗**: 包含自定義品牌標誌 (`public/`)、支援深淺色主題切換、即時推論延遲追蹤 ("Thought for X seconds") 以及完整本地化歡迎畫面。
 
 ## 系統需求
 
@@ -49,10 +50,12 @@
 ├── ai_env/                     # Python 虛擬環境
 ├── models/                     # GGUF 模型儲存目錄 (Llama-3 與 Foundation-Sec)
 ├── qdrant_storage/             # Qdrant 向量資料庫的持久化儲存目錄
+├── public/                     # 自定義品牌資源 (Logo、CSS、主題設定)
 ├── cisco_security_chainlit.py  # Chainlit 主程式檔案
+├── playbooks.json              # 集中化的資安 SOP/Playbooks，供 RAG 匯入使用
 ├── download_models.sh          # 自動下載所需的 HuggingFace GGUF 模型
 ├── install_metal.sh            # 設定 macOS Metal 環境、Venv 並安裝 MPS 相依套件
-├── run.sh                      # 整合執行指令碼 (自動完成初始設定與啟動)
+├── run.sh                      # 智慧化執行腳本 (自動完成設定，若環境就緒則跳過編譯)
 └── (其他設定檔與指令碼)
 ```
 
@@ -79,6 +82,7 @@
    - `./download_models.sh`: 檢查並下載缺失的 GGUF 語言模型。
    - `./install_metal.sh`: 自動安裝 Homebrew，檢查 Xcode CLTs，並設定支援 Metal 的 `llama-cpp-python` Python 虛擬環境 (`ai_env`)。
    - **Docker Compose**: 檢查並啟動名為 `cisco-foundation-sec-8b-macos-qdrant` 的服務。
+   - **自動 RAG 同步**: 應用程式啟動時會自動讀取 `playbooks.json` 並更新 Qdrant 知識庫。
    - 更新套件相依性後，啟動 `cisco_security_chainlit.py` 網頁服務。
 
 ### 方式二：手動啟動 (建議完成初始設定後使用)

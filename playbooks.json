@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "title": "Handling config.php.bak scans",
+        "content": "If a user or IP is repeatedly scanning for config.php.bak, backup.zip, or similar backup files, it indicates a directory traversal or backup file exposure attack. Action: Immediately block the IP at the WAF level and investigate if any backup files are actually exposed on the server."
+    },
+    {
+        "id": 2,
+        "title": "Recurring Nginx 404s",
+        "content": "A high volume of Nginx 404 errors for hidden files (e.g., .env, .git/config) signifies an automated vulnerability scanner. Action: Temporarily ban the IP using fail2ban and enable rate limiting for 404 responses."
+    },
+    {
+        "id": 3,
+        "title": "SSH Brute Force",
+        "content": "Multiple failed SSH login attempts for users like root or admin. Action: Ensure password authentication is disabled, rely on SSH keys only, and verify fail2ban is monitoring port 22."
+    },
+    {
+        "id": 4,
+        "title": "SQL Injection Attempts",
+        "content": "Logs containing keywords like UNION SELECT, OR 1=1, or unexpected quotation marks in URL parameters. Action: Validate input sanitization on the application end and update WAF rules to block common SQLi payloads."
+    }
+]

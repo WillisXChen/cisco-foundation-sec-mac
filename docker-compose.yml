@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 services:
   cisco-foundation-sec-8b-macos-qdrant:
     image: qdrant/qdrant:latest

@@ -1,0 +1,336 @@
+/* ====================================================
+   Cisco Foundation-Sec 8B — Custom Avatar / UI Styles
+   Maintainer: Willis Chen <misweyu2007@gmail.com>
+   Sci-Fi / Cyberpunk HUD Theme v2.0
+   ==================================================== */
+
+/* ===== Sci-Fi Dynamic Background: Grid + Scanlines + Neon Glow ===== */
+
+/* Dynamic Grid Background */
+@keyframes gridScroll {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 60px 60px;
+  }
+}
+
+/* Scanline Animation */
+@keyframes scanlines {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.07;
+  }
+
+  100% {
+    transform: translateY(100vh);
+    opacity: 0.03;
+  }
+}
+
+/* Neon Pulse Glow */
+@keyframes neonPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 6px 1px rgba(0, 255, 255, 0.15), 0 0 18px 2px rgba(0, 255, 255, 0.06);
+  }
+
+  50% {
+    box-shadow: 0 0 12px 3px rgba(0, 255, 255, 0.30), 0 0 32px 6px rgba(0, 255, 255, 0.12);
+  }
+}
+
+/* Border Glow Animation */
+@keyframes borderGlow {
+
+  0%,
+  100% {
+    border-color: rgba(0, 255, 255, 0.25);
+  }
+
+  50% {
+    border-color: rgba(0, 255, 255, 0.60);
+  }
+}
+
+/* Text Typewriter Blink Effect */
+@keyframes cursorBlink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ===== Body Background: Dynamic Grid + Dark Base ===== */
+body,
+#root,
+.cl-root {
+  background-color: #030c18 !important;
+  background-image:
+    linear-gradient(rgba(0, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 50%, rgba(0, 80, 160, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.10) 0%, transparent 50%) !important;
+  background-size: 60px 60px, 60px 60px, 100% 100%, 100% 100% !important;
+  animation: gridScroll 8s linear infinite !important;
+}
+
+/* ===== Scanline Overlay ===== */
+body::before {
+  content: '';
+  position: fixed;
+  top: -100vh;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 255, 255, 0.06) 50%,
+      transparent 100%);
+  z-index: 9999;
+  pointer-events: none;
+  animation: scanlines 6s linear infinite;
+}
+
+/* ===== Global Glow Corner Decorations ===== */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(0, 200, 255, 0.08) 0%, transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(0, 80, 200, 0.08) 0%, transparent 35%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== Message Container: Sci-Fi Frosted Glass Card ===== */
+[class*="message"],
+[class*="Message"],
+[class*="step"],
+[class*="Step"] {
+  background: linear-gradient(135deg,
+      rgba(0, 20, 40, 0.75) 0%,
+      rgba(0, 30, 55, 0.65) 100%) !important;
+  backdrop-filter: blur(12px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
+  border: 1px solid rgba(0, 255, 255, 0.18) !important;
+  border-radius: 12px !important;
+  animation: borderGlow 3s ease-in-out infinite !important;
+  box-shadow:
+    0 0 8px rgba(0, 255, 255, 0.08),
+    0 4px 24px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(0, 255, 255, 0.08) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease !important;
+  align-items: flex-start !important;
+}
+
+[class*="message"]:hover,
+[class*="Message"]:hover {
+  box-shadow:
+    0 0 18px rgba(0, 255, 255, 0.20),
+    0 4px 32px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(0, 255, 255, 0.15) !important;
+  border-color: rgba(0, 255, 255, 0.40) !important;
+}
+
+/* ===== User Message Bubble: Slightly Cyan Sci-Fi Color ===== */
+[class*="userMessage"],
+[class*="user-message"],
+[class*="UserMessage"] {
+  background: linear-gradient(135deg,
+      rgba(0, 40, 60, 0.80) 0%,
+      rgba(0, 60, 80, 0.70) 100%) !important;
+  border-color: rgba(0, 200, 220, 0.30) !important;
+}
+
+/* ===== Main Chat Area Background ===== */
+main,
+[class*="chat-container"],
+[class*="chatContainer"],
+[class*="messages"],
+[class*="Messages"] {
+  background: transparent !important;
+}
+
+/* ===== Input Box: Neon Sci-Fi Style ===== */
+[class*="input"],
+[class*="Input"],
+textarea,
+input[type="text"] {
+  background: rgba(0, 15, 30, 0.85) !important;
+  border: 1px solid rgba(0, 255, 255, 0.25) !important;
+  border-radius: 10px !important;
+  color: #c0f0ff !important;
+  box-shadow:
+    0 0 8px rgba(0, 255, 255, 0.06),
+    inset 0 1px 0 rgba(0, 255, 255, 0.05) !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+[class*="input"]:focus,
+[class*="Input"]:focus,
+textarea:focus {
+  border-color: rgba(0, 255, 255, 0.60) !important;
+  box-shadow:
+    0 0 16px rgba(0, 255, 255, 0.20),
+    inset 0 1px 0 rgba(0, 255, 255, 0.10) !important;
+  outline: none !important;
+}
+
+/* ===== Bottom Input Row Container ===== */
+[class*="inputContainer"],
+[class*="input-container"],
+[class*="composer"],
+[class*="Composer"] {
+  background: linear-gradient(180deg,
+      rgba(0, 10, 25, 0.0) 0%,
+      rgba(0, 10, 25, 0.92) 30%) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-top: 1px solid rgba(0, 255, 255, 0.12) !important;
+}
+
+/* ===== Sidebar: Deep Sci-Fi Style ===== */
+[class*="sidebar"],
+[class*="Sidebar"],
+nav {
+  background: linear-gradient(180deg,
+      rgba(1, 8, 20, 0.96) 0%,
+      rgba(2, 12, 30, 0.96) 100%) !important;
+  border-right: 1px solid rgba(0, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* ===== Header ===== */
+header {
+  background: rgba(1, 8, 20, 0.92) !important;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ===== Code Block: Hacker Terminal Style ===== */
+pre,
+code {
+  background: rgba(0, 255, 100, 0.04) !important;
+  border: 1px solid rgba(0, 255, 100, 0.15) !important;
+  border-radius: 8px !important;
+  color: #7fff9e !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  box-shadow: 0 0 10px rgba(0, 255, 100, 0.06) !important;
+}
+
+/* ===== Button: Sci-Fi Neon CTA ===== */
+button[class*="primary"],
+[class*="sendButton"],
+[class*="send-button"] {
+  background: linear-gradient(135deg, #005577 0%, #007799 100%) !important;
+  border: 1px solid rgba(0, 255, 255, 0.40) !important;
+  color: #00ffff !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.18) !important;
+  transition: all 0.2s ease !important;
+}
+
+button[class*="primary"]:hover,
+[class*="sendButton"]:hover {
+  background: linear-gradient(135deg, #007799 0%, #00aabb 100%) !important;
+  box-shadow: 0 0 24px rgba(0, 255, 255, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===== Text Color Tweaks ===== */
+p,
+span,
+li {
+  color: #b8e8f8 !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #00e5ff !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.35) !important;
+}
+
+/* ===== Blockquotes ===== */
+blockquote {
+  border-left: 3px solid rgba(0, 255, 255, 0.40) !important;
+  background: rgba(0, 255, 255, 0.04) !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* ===== Scrollbar Sci-Fi Beautification ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 10, 25, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #004466 0%, #006688 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.25);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #005577 0%, #0099bb 100%);
+}
+
+/* ===== Avatar Size Optimization (Preserving Old Settings) ===== */
+.cl-avatar,
+[class*="avatar"],
+[class*="Avatar"] {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  overflow: hidden !important;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.30) !important;
+  border: 1px solid rgba(0, 255, 255, 0.30) !important;
+}
+
+.cl-avatar img,
+[class*="avatar"] img,
+[class*="Avatar"] img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 50% !important;
+}
+
+.step-icon,
+[class*="stepIcon"],
+[class*="step-icon"] {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  overflow: hidden !important;
+}
+
+header img,
+[class*="logo"],
+[class*="Logo"] {
+  max-height: 40px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}

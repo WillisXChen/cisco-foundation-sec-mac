@@ -1,15 +1,18 @@
+import asyncio
+import time
 import chainlit as cl
 import os
+import json
 from llama_cpp import Llama
 from qdrant_client import QdrantClient
 
 # === Configuration ===
-# 設定預設的模型路徑，可以透過環境變數覆寫
+# Set default model paths, can be overridden via environment variables
 MODEL_SEC_PATH = os.getenv("MODEL_SEC_PATH", "./models/foundation-sec-8b-q4_k_m.gguf")
 MODEL_LLAMA3_PATH = os.getenv("MODEL_LLAMA3_PATH", "./models/llama-3-taiwan-8b-instruct-q4_k_m.gguf")
 
-# === 全域變數 (Global instances) ===
-# 只在啟動時載入一次模型，避免每次連線都重新載入消耗記憶體與時間
+# === Global instances ===
+# Load models only once at startup to avoid memory and time overhead on every connection
 llm_llama3 = None
 llm_sec = None
 qdrant_client = None
@@ -49,33 +52,65 @@ def load_model(model_path: str, context_size: int = 4096):
 @cl.on_chat_start
 async def on_chat_start():
     global llm_llama3, llm_sec, qdrant_client
-    
-    # 傳送載入中的訊息給使用者
+
+    # Send loading message to user (Show before model starts loading to inform them to wait)
+    # Note: During on_chat_start execution, Chainlit automatically locks the input field,
+    #       until this function completes fully, ensuring input unlocks only when models are ready.
     loading_msg = cl.Message(content="### ⚙️ 系統初始化中... 正在載入 AI 模型，請稍候。")
     await loading_msg.send()
 
     try:
-        # 載入模型（若尚未載入）
+        # Use asyncio.to_thread() to offload synchronous load_model to Thread Pool,
+        # preventing event loop blockage, allowing Chainlit to refresh UI status in real-time.
         if llm_llama3 is None:
-            llm_llama3 = load_model(MODEL_LLAMA3_PATH)
+            loading_msg.content = "### ⚙️ 載入中 (1/4)：正在載入 Llama3-Taiwan 模型..."
+            await loading_msg.update()
+            llm_llama3 = await asyncio.to_thread(load_model, MODEL_LLAMA3_PATH)
+
         if llm_sec is None:
-            llm_sec = load_model(MODEL_SEC_PATH)
+            loading_msg.content = "### ⚙️ 載入中 (2/4)：正在載入 Foundation-Sec 資安模型..."
+            await loading_msg.update()
+            llm_sec = await asyncio.to_thread(load_model, MODEL_SEC_PATH)
+
         if qdrant_client is None:
+            loading_msg.content = "### ⚙️ 載入中 (3/4)：正在連線 Qdrant 向量資料庫..."
+            await loading_msg.update()
             print("Connecting to Qdrant instance...")
             qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
             qdrant_client = QdrantClient(url=qdrant_url)
             print("Setting up embedding model...")
-            qdrant_client.set_model("BAAI/bge-small-en-v1.5")
-            
-        loading_msg.content = "### ✅ 模型載入完成！\n\n🛡️ **歡迎使用 Foundation-Sec-8B Security Assistant!** 🛡️\n\n您可以開始輸入有關資安、程式設計或一般問題。"
+            await asyncio.to_thread(qdrant_client.set_model, "BAAI/bge-small-en-v1.5")
+
+        # Automatically ingest playbooks from playbooks.json if collection is empty
+        loading_msg.content = "### ⚙️ 載入中 (4/4)：正在同步資安 SOP 知識庫..."
         await loading_msg.update()
         
+        collection_name = "security_playbooks"
+        # Check if collection exists or has documents (Simplified: just attempt to ingest)
+        playbooks_path = os.path.join(os.path.dirname(__file__), "playbooks.json")
+        if os.path.exists(playbooks_path):
+            with open(playbooks_path, "r", encoding="utf-8") as f:
+                docs_data = json.load(f)
+                docs = [d["content"] for d in docs_data]
+                metadatas = [{"title": d["title"]} for d in docs_data]
+                ids = [d["id"] for d in docs_data]
+                await asyncio.to_thread(
+                    qdrant_client.add,
+                    collection_name=collection_name,
+                    documents=docs,
+                    metadata=metadatas,
+                    ids=ids
+                )
+
+        loading_msg.content = "### ✅ 模型載入完成！\n\n🛡️ **歡迎使用 Foundation-Sec-8B Security Assistant!** 🛡️\n\n您可以開始輸入有關資安、程式設計或一般問題。"
+        await loading_msg.update()
+
     except Exception as e:
         loading_msg.content = f"### ❌ 模型載入失敗\n錯誤訊息: `{e}`\n請確認模型路徑是否正確 (預設路徑 `./models/...`)。"
         await loading_msg.update()
         return
 
-    # 初始化這個使用者的聊天歷史紀錄
+    # Initialize chat history for this user session
     cl.user_session.set("chat_history", [])
 
 @cl.on_message
@@ -100,16 +135,16 @@ async def main(message: cl.Message):
         }
     ]
 
-    # 僅根據當前問題判斷 Intent，避免歷史對話過長導致分類器（Llama 3）混亂而無法正確輸出 YES/NO
+    # Only determine intent based on current question to prevent Llama 3 classifier confusion over long history context
     classification_messages.append({"role": "user", "content": user_input})
 
     is_security = False
     
-    # 建立 IT 關鍵字安全網，防止小型模型對生硬 Log 分類失敗
+    # Fallback keyword safety net, preventing small models from failing to classify stark logs
     critical_it_keywords = ["http", "get ", "post ", "error", "exception", "php", "sql", "login", ".bak", "log", "404", "500", "id_rsa", "ssh"]
     user_input_lower = user_input.lower()
     
-    # 如果 Llama3 判斷錯誤，但內容明顯是 IT/Log 相關，強制定義為資安問題
+    # If Llama3 misjudged but contents are ostensibly IT/Log related, force assign to security intent
     if any(keyword in user_input_lower for keyword in critical_it_keywords):
         is_security = True
         print("[DEBUG] Intent forced to YES by Keyword Matching")
@@ -128,7 +163,7 @@ async def main(message: cl.Message):
             print(f"[Classification Error]: {e}")
             is_security = False
 
-    # 根據分類結果決定使用的模型
+    # Choose model to use based on classification result
     active_llm = llm_sec if is_security else llm_llama3
     active_name = "Foundation-Sec" if is_security else "Llama3-Taiwan"
     active_system_msg = sec_system_message if is_security else general_system_message
@@ -136,7 +171,7 @@ async def main(message: cl.Message):
     # === Main Generation ===
     chat_messages = [{"role": "system", "content": active_system_msg}]
     
-    # 無論是一般還是資安問題，都帶入歷史對話紀錄，確保多輪上下文記憶
+    # Prepend chat history for context memory regardless of general or security question
     for msg in chat_history:
         chat_messages.append(msg)
 
@@ -158,14 +193,14 @@ async def main(message: cl.Message):
         except Exception as e:
             print(f"[RAG Error] {e}")
 
-        # 針對資安相關問題，適度提醒回覆英文即可，不要用語氣過於強烈的威脅性字眼，避免 8B 模型引發幻覺崩潰
+        # Enforce English-only output for security questions implicitly without overly heavy threatening tones, preventing hallucinations from the 8B model
         enforced_input = f"{context_str}{user_input}\n\n[Action: Please analyze the above input and respond in English only. Base your answer on the Internal System Context if it is relevant.]"
         chat_messages.append({"role": "user", "content": enforced_input})
 
-    # 準備一個明顯的前綴標籤，讓使用者知道是哪個模型在回答
+    # Output visible prefix badge so users know which model generated responses
     model_badge = f"### 🧠 由 `{active_name}` 生成回應\n---\n"
     
-    # 先發送一個空的 Message (UI 出現載入動畫)，之後會逐步串流 (Stream)
+    # Send empty Message first (triggering UI loading animation), then we stream out progressively
     response_msg = cl.Message(content=model_badge, author=active_name)
     await response_msg.send()
 
@@ -175,16 +210,17 @@ async def main(message: cl.Message):
         stream = active_llm.create_chat_completion(
             messages=chat_messages,
             stream=True,         
-            temperature=0.4 if is_security else 0.2,  # 提高自然變化率以取代強壓式的懲罰
+            temperature=0.4 if is_security else 0.2,  # Boost natural variation rate as an alternative to harsh penalties
             top_p=0.9,
-            repeat_penalty=1.05 if is_security else 1.0, # 降到最底線，防止 logits 崩潰成亂碼
-            frequency_penalty=0.0, # 全面關閉，這是導致印出奇怪符號的主因
-            presence_penalty=0.0,  # 全面關閉
+            repeat_penalty=1.05 if is_security else 1.0, # Drop to bottom baseline to prevent logit collapse into gibberish
+            frequency_penalty=0.0, # Completely disabled, as this was the main reason for strange symbol outputs
+            presence_penalty=0.0,  # Completely disabled
             max_tokens=600 if is_security else 2048,
             stop=["<|eot_id|>", "<|end_of_text|>", "</s>", "[INST]", "User:", "[Foundation-Sec]:", "\n\n", "Your response:"]
         )
 
         usage_main = None
+        gen_start_time = time.time()  # ⏱️ Start timing
         for chunk in stream:
             if "usage" in chunk and chunk["usage"]:
                 usage_main = chunk["usage"]
@@ -193,18 +229,24 @@ async def main(message: cl.Message):
                 if "content" in delta:
                     text_chunk = delta["content"]
                     assistant_response += text_chunk
-                    await response_msg.stream_token(text_chunk) # 即時將字串送往前端
+                    await response_msg.stream_token(text_chunk) # Yield real-time string over to frontend
+        gen_elapsed = time.time() - gen_start_time  # ⏱️ End timing
                     
-        # 計算 Tokens 資訊
+        # Calculate Tokens metadata
         if not usage_main:
             p_tokens = len(active_llm.tokenize(str(chat_messages).encode("utf-8")))
             c_tokens = len(active_llm.tokenize(assistant_response.encode("utf-8")))
             usage_main = {"prompt_tokens": p_tokens, "completion_tokens": c_tokens, "total_tokens": p_tokens + c_tokens}
             
-        token_info_main = f"\n\n---\n*⚡ Tokens: {usage_main.get('total_tokens', 0)} (輸入: {usage_main.get('prompt_tokens', 0)} | 輸出: {usage_main.get('completion_tokens', 0)})*"
+        token_info_main = (
+            f"*⚡ Tokens: {usage_main.get('total_tokens', 0)} "
+            f"(輸入: {usage_main.get('prompt_tokens', 0)} | 輸出: {usage_main.get('completion_tokens', 0)}) "
+            f"· 🕐 Thought for {gen_elapsed:.1f}s*"
+        )
+        await response_msg.stream_token("\n\n---\n")
         await response_msg.stream_token(token_info_main)
         
-        await response_msg.update() # 結束 Token 串流
+        await response_msg.update() # Finish Token streaming
 
         # === Translation for Security Output ===
         if is_security:
@@ -213,8 +255,8 @@ async def main(message: cl.Message):
             await trans_msg.send()
             
             trans_messages = [
-                {"role": "system", "content": "你是資安翻譯專家。請將原文翻譯成繁體中文。請直接輸出翻譯結果，不要加上任何解釋或開場白。"},
-                {"role": "user", "content": f"原文：\n{assistant_response}"},
+                {"role": "system", "content": "You are a cybersecurity translation expert. Please translate the following text into Traditional Chinese. Output ONLY the translation without any preamble."},
+                {"role": "user", "content": f"Text to translate:\n{assistant_response}"},
             ]
             
             chinese_response = ""
@@ -227,11 +269,12 @@ async def main(message: cl.Message):
                     stop=["<|eot_id|>", "<|end_of_text|>"]
                 )
                 
-                # 重設翻譯區塊的內容準備接收新的串流，並加上模型標籤
+                # Reset translation chunk to prepare for new streams, alongside the model badge
                 trans_msg.content = trans_badge
                 await trans_msg.update()
 
                 trans_usage = None
+                trans_start_time = time.time()  # ⏱️ Start translation timing
                 for chunk in trans_stream:
                     if "usage" in chunk and chunk["usage"]:
                         trans_usage = chunk["usage"]
@@ -241,27 +284,33 @@ async def main(message: cl.Message):
                             text_chunk = delta["content"]
                             chinese_response += text_chunk
                             await trans_msg.stream_token(text_chunk)
+                trans_elapsed = time.time() - trans_start_time  # ⏱️ End translation timing
                 
-                # 計算 Tokens 資訊
+                # Calculate Tokens metadata
                 if not trans_usage:
                     tp_tokens = len(llm_llama3.tokenize(str(trans_messages).encode("utf-8")))
                     tc_tokens = len(llm_llama3.tokenize(chinese_response.encode("utf-8")))
                     trans_usage = {"prompt_tokens": tp_tokens, "completion_tokens": tc_tokens, "total_tokens": tp_tokens + tc_tokens}
                 
-                trans_token_info = f"\n\n---\n*⚡ Tokens: {trans_usage.get('total_tokens', 0)} (輸入: {trans_usage.get('prompt_tokens', 0)} | 輸出: {trans_usage.get('completion_tokens', 0)})*"
+                trans_token_info = (
+                    f"*⚡ Tokens: {trans_usage.get('total_tokens', 0)} "
+                    f"(輸入: {trans_usage.get('prompt_tokens', 0)} | 輸出: {trans_usage.get('completion_tokens', 0)}) "
+                    f"· 🕐 Thought for {trans_elapsed:.1f}s*"
+                )
+                await trans_msg.stream_token("\n\n---\n")
                 await trans_msg.stream_token(trans_token_info)
                 
                 await trans_msg.update()
                 
-                # 注意：這裡「不」將中文翻譯結果整併進 assistant_response
-                # 這樣才能確保資安模型（只能講英文）在讀取歷史紀錄時，不會看到自己產生中文，避免發生語系幻覺污染
+                # Note: We do "not" integrate the translated Chinese response into assistant_response here!
+                # This guarantees that the security model (English-only domain) does not see generated Chinese inside history, avoiding localization hallucinations.
                 
             except Exception as e:
                 print(f"[Translation Error]: {e}")
                 trans_msg.content = "**[中文翻譯失敗]**\n" + str(e)
                 await trans_msg.update()
 
-        # Update chat history (只存乾淨的英文或一般對話，不含 Token 資訊與翻譯)
+        # Update chat history (only storing clean English or general chats, no token info or nested translations)
         chat_history.append({"role": "user", "content": user_input})
         chat_history.append({"role": "assistant", "content": assistant_response})
         cl.user_session.set("chat_history", chat_history)

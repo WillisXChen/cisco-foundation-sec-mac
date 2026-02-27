@@ -1,12 +1,27 @@
 #!/bin/bash
+set -e
+
+# Ensure models are downloaded
 ./download_models.sh
-./install_metal.sh
-# 檢查 qdrant-db 容器是否正在運行
+
+# Only run installation if virtual environment is missing
+if [ ! -d "ai_env" ]; then
+    echo "Environment not found. Starting first-time setup..."
+    ./install_metal.sh
+else
+    echo "Virtual environment detected. Skipping setup."
+fi
+
+# Ensure Qdrant service is running
 if ! docker ps --format '{{.Names}}' | grep -q "^cisco-foundation-sec-8b-macos-qdrant$"; then
-    echo "Qdrant 服務尚未執行，正在啟動 docker compose..."
+    echo "Qdrant service is not running. Starting via Docker Compose..."
     docker compose up -d cisco-foundation-sec-8b-macos-qdrant
 else
-    echo "Qdrant 服務已經在運行中。"
+    echo "Qdrant service is already active."
 fi
-./ai_env/bin/pip install -r requirements.txt
-./ai_env/bin/chainlit run ./cisco_security_chainlit.py 
+
+# Activating environment and running application
+echo "Starting Chainlit application..."
+source ai_env/bin/activate
+pip install -r requirements.txt
+chainlit run ./cisco_security_chainlit.py

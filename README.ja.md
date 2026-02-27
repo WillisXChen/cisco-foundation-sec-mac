@@ -29,10 +29,11 @@
 ## コアコンポーネント
 
 1. **フロントエンドインターフェース**: Chainlit (`cisco_security_chainlit.py`) を使用して会話形式のAIインターフェースを構築し、リアルタイムでのテキストストリーミングとチャット履歴をサポートします。
-2. **多言語サポート**: **Llama-3-Taiwan-8B-Instruct**を通じて、意図の分類、多言語理解、および翻訳を処理します。
+2. **多言語サポート**: **Llama-3-Taiwan-8B-Instruct**を通じて、意図の分類、多言語理解、および翻訳を処理します。Chainlitのローカライズにより20以上の言語をサポートしています。
 3. **セキュリティエクスパート**: サイバーセキュリティ領域に特化してファインチューニングされた**Foundation-Sec-8B**により、詳細なシステムおよびセキュリティログ分析を実行します。
 4. **ハードウェアアクセラレーション**: macOS Metal (MPS)と`llama-cpp-python`を統合し、Apple Silicon上での推論パフォーマンスを最大化します。
-5. **ベクトル検索 (RAG)**: Docker経由でデプロイされた**Qdrant**を使用して、企業内のセキュリティドキュメントを保存・検索することで、言語モデルの分析精度を向上させ、ハルシネーションを低減します。
+5. **ベクトル検索 (RAG)**: Docker経由でデプロイされた**Qdrant**を使用して、セキュリティ・プレイブックを保存・検索します。起動時の**自動RAG同期**機能を搭載しました。
+6. **洗練されたユーザー体験**: カスタムブランディング（`public/`）、ダーク/ライトテーマのサポート、リアルタイム推論レイテンシ追跡（"Thought for X seconds"）が含まれます。
 
 ## システム要件
 
@@ -49,10 +50,12 @@
 ├── ai_env/                     # Python仮想環境
 ├── models/                     # GGUFモデルの保存先 (Llama-3 および Foundation-Sec)
 ├── qdrant_storage/             # Qdrantベクトルデータベースの永続的保存先ディレクトリ
+├── public/                     # カスタムブランディング資産 (ロゴ、CSS、テーマ)
 ├── cisco_security_chainlit.py  # Chainlitメインアプリケーションファイル
+├── playbooks.json              # RAG取り込み用の集約されたセキュリティSOP/プレイブック
 ├── download_models.sh          # 必要なHuggingFace GGUFモデルの自動ダウンロード
 ├── install_metal.sh            # macOS Metal環境、Venvのセットアップ、MPS依存関係のインストール
-├── run.sh                      # 統合実行スクリプト (初期セットアップと起動を自動化)
+├── run.sh                      # 高度な実行スクリプト (セットアップ自動化、準備完了時はコンパイルをスキップ)
 └── (その他の設定ファイルやスクリプト)
 ```
 
@@ -64,22 +67,23 @@
 
 プロジェクトには、必要なパッケージのインストール、モデルのダウンロード、Qdrantコンテナの開始、およびChainlitサービスの実行を自動的に行うワンクリック起動スクリプトが用意されています。
 
-1. **ターミナルを開き**、本プロジェクトディレクトリに移動します:
-   ```bash
-   cd /path/to/cisco-foundation-sec-8b-macos
-   ```
+1.  **ターミナルを開き**、本プロジェクトディレクトリに移動します:
+    ```bash
+    cd /path/to/cisco-foundation-sec-8b-macos
+    ```
 
-2. **実行権限を付与し、起動スクリプトを実行します**:
-   ```bash
-   chmod +x *.sh
-   ./run.sh
-   ```
+2.  **実行権限を付与し、起動スクリプトを実行します**:
+    ```bash
+    chmod +x *.sh
+    ./run.sh
+    ```
 
-3. **初回の起動プロセスには以下が含まれます**:
-   - `./download_models.sh`: 不足しているGGUF言語モデルを確認してダウンロードします。
-   - `./install_metal.sh`: Homebrewを自動的にインストールし、Xcode CLTsを確認し、Metalをサポートする`llama-cpp-python`を備えたPython仮想環境（`ai_env`）をセットアップします。
-   - **Docker Compose**: `cisco-foundation-sec-8b-macos-qdrant`という名前のサービスを確認して起動します。
-   - パッケージの依存関係を更新後、`cisco_security_chainlit.py`ウェブサービスを起動します。
+3.  **初回の起動プロセスには以下が含まれます**:
+    -   `./download_models.sh`: 不足しているGGUF言語モデルを確認してダウンロードします。
+    -   `./install_metal.sh`: Homebrewを自動的にインストールし、Xcode CLTsを確認し、Metalをサポートする`llama-cpp-python`を備えたPython仮想環境（`ai_env`）をセットアップします。
+    -   **Docker Compose**: `cisco-foundation-sec-8b-macos-qdrant`という名前のサービスを確認して起動します。
+    -   **自動RAG同期**: アプリケーション起動時に`playbooks.json`を読み込み、Qdrantナレッジベースを自動更新します。
+    -   パッケージの依存関係を更新後、`cisco_security_chainlit.py`ウェブサービスを起動します。
 
 ### 方法 2: 手動起動 (初回セットアップ完了後に推奨)
 
