@@ -9,3 +9,7 @@ streamlit
 requests
 asitop
 influxdb-client
+structlog
+langfuse
+opentelemetry-sdk
+opentelemetry-exporter-otlp

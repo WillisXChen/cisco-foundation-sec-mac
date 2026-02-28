@@ -1,0 +1,31 @@
+[project]
+# Disable telemetry data collection
+enable_telemetry = false
+
+[features]
+# Allow users to upload image/file (multi-modal mode)
+multi_modal = true
+# Frontend does not allow user to manually switch models
+unsafe_allow_html = true
+
+[UI]
+# Application name (displayed in tab title and UI header)
+name = "Cisco Foundation Sec 8B with Taiwan LLM "
+
+# Default to dark mode (matches code_panda dark tech style)
+default_theme = "dark"
+
+# Default language
+default_language = "zh-TW"
+
+# Whether to show README as the welcome page in the sidebar
+show_readme_as_default = true
+
+# Login page background image
+# login_page_image = "/login_bg.webp"
+
+# Custom CSS (optimizes avatar size, ensures circular cropping)
+custom_css = "/custom.css"
+
+[meta]
+generated_by = "1.3.0"

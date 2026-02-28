@@ -5,6 +5,7 @@ from core.llm import LLMManager
 from core.database import VectorDBManager
 from core.config import TRANSLATION_SYSTEM_MESSAGE
 from core.logger import logger
+from langfuse import observe
 
 class AssistantService:
     """Orchestrates LLM calls, RAG context, and translation logic."""
@@ -12,6 +13,7 @@ class AssistantService:
         self.llm = llm_manager
         self.vector_db = vector_db
 
+    @observe(as_type="generation")
     async def generate_response(self, user_input: str, chat_history: list) -> typing.AsyncGenerator[dict, None]:
         """Classifies intent, fetches context, and streams main response."""
         
@@ -79,7 +81,10 @@ class AssistantService:
             "elapsed": gen_elapsed,
             "tokens": {"total": p_tokens + c_tokens, "prompt": p_tokens, "completion": c_tokens}
         }
+        
+        # TODO: manual trace update logic needs mapping to the new API if possible, for now simplify by letting the decorator handle it
 
+    @observe(as_type="generation")
     async def translate_response(self, text: str) -> typing.AsyncGenerator[dict, None]:
         """Translates English response to Traditional Chinese using the general model."""
         if not self.llm.llm_general:
@@ -126,3 +131,5 @@ class AssistantService:
             "elapsed": trans_elapsed,
             "tokens": {"total": tp_tokens + tc_tokens, "prompt": tp_tokens, "completion": tc_tokens}
         }
+        
+        # TODO: manual trace update logic needs mapping to the new API if possible

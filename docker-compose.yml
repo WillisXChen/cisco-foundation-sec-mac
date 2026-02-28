@@ -34,3 +34,56 @@ services:
     depends_on:
       - cisco-foundation-sec-8b-macos-influxdb
     restart: unless-stopped
+
+  cisco-foundation-sec-8b-macos-langfuse-db:
+    image: postgres:15
+    container_name: cisco-foundation-sec-8b-macos-langfuse-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./langfuse_db_storage:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  cisco-foundation-sec-8b-macos-langfuse:
+    image: ghcr.io/langfuse/langfuse:2
+    container_name: cisco-foundation-sec-8b-macos-langfuse
+    depends_on:
+      cisco-foundation-sec-8b-macos-langfuse-db:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@cisco-foundation-sec-8b-macos-langfuse-db:5432/postgres
+      - NEXTAUTH_SECRET=my_super_secret_key_for_langfuse
+      - SALT=my_super_safe_salt_for_langfuse
+      - NEXTAUTH_URL=http://localhost:3001
+      - TELEMETRY_ENABLED=false
+      # Headless Initialization (Auto-Create Org, Project, and Keys)
+      - LANGFUSE_INIT_ORG_ID=cisco-org
+      - LANGFUSE_INIT_ORG_NAME=Cisco Org
+      - LANGFUSE_INIT_PROJECT_ID=cisco-project
+      - LANGFUSE_INIT_PROJECT_NAME=Cisco Foundation Sec 8B
+      - LANGFUSE_INIT_PROJECT_PUBLIC_KEY=pk-lf-1234567890
+      - LANGFUSE_INIT_PROJECT_SECRET_KEY=sk-lf-1234567890
+      - LANGFUSE_INIT_USER_EMAIL=admin@cisco.com
+      - LANGFUSE_INIT_USER_PASSWORD=adminadmin
+      - LANGFUSE_INIT_USER_NAME=Admin User
+    restart: unless-stopped
+
+  cisco-foundation-sec-8b-macos-phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: cisco-foundation-sec-8b-macos-phoenix
+    ports:
+      - "6006:6006" # Phoenix UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    restart: unless-stopped

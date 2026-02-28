@@ -9,6 +9,17 @@ from chainlit.server import app as fastapi_app
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+# Initialize Arize Phoenix OpenTelemetry tracing
+trace_provider = TracerProvider()
+trace_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")))
+trace.set_tracer_provider(trace_provider)
+tracer = trace.get_tracer("cisco.foundation.sec")
+
 from core.config import (
     INFLUXDB_URL, INFLUXDB_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET,
     QDRANT_URL, MODEL_SEC_PATH, MODEL_LLAMA3_PATH, PLAYBOOKS_PATH
@@ -103,7 +114,10 @@ async def on_chat_start():
 
     cl.user_session.set("chat_history", [])
 
+from langfuse import observe
+
 @cl.on_message
+@observe()
 async def main(message: cl.Message):
     chat_history = cl.user_session.get("chat_history", [])
     user_input = message.content.strip()
@@ -113,23 +127,25 @@ async def main(message: cl.Message):
     assistant_full_text = ""
     is_sec = False
 
-    async for chunk in assistant_service.generate_response(user_input, chat_history):
-        if chunk["type"] == "meta":
-            response_msg.author = chunk["author"]
-            response_msg.content = f"### 🧠 由 `{chunk['author']}` 生成回應\n---\n"
-            is_sec = chunk["is_security"]
-            await response_msg.send()
-        elif chunk["type"] == "token":
-            assistant_full_text += chunk["content"]
-            await response_msg.stream_token(chunk["content"])
-        elif chunk["type"] == "final":
-            token_info = (
-                f"\n\n---\n*⚡ Tokens: {chunk['tokens']['total']} "
-                f"(進: {chunk['tokens']['prompt']} | 出: {chunk['tokens']['completion']}) "
-                f"· 🕐 {chunk['elapsed']:.1f}s*"
-            )
-            await response_msg.stream_token(token_info)
-            await response_msg.update()
+    # Start Phoenix Trace
+    with tracer.start_as_current_span(f"Chat Generation: {user_input[:20]}..."):
+        async for chunk in assistant_service.generate_response(user_input, chat_history):
+            if chunk["type"] == "meta":
+                response_msg.author = chunk["author"]
+                response_msg.content = f"### 🧠 由 `{chunk['author']}` 生成回應\n---\n"
+                is_sec = chunk["is_security"]
+                await response_msg.send()
+            elif chunk["type"] == "token":
+                assistant_full_text += chunk["content"]
+                await response_msg.stream_token(chunk["content"])
+            elif chunk["type"] == "final":
+                token_info = (
+                    f"\n\n---\n*⚡ Tokens: {chunk['tokens']['total']} "
+                    f"(進: {chunk['tokens']['prompt']} | 出: {chunk['tokens']['completion']}) "
+                    f"· 🕐 {chunk['elapsed']:.1f}s*"
+                )
+                await response_msg.stream_token(token_info)
+                await response_msg.update()
 
     # Optional Translation
     if is_sec:
