@@ -1,39 +1,61 @@
 #!/bin/bash
 set -e
 
+# Load environment variables from .env if present
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 COMMAND=$1
+
+# Default values if not set in .env
+INFLUXDB_URL=${INFLUXDB_URL:-"http://localhost:8181"}
+INFLUXDB_TOKEN=${INFLUXDB_TOKEN:-"apiv3_cisco-super-secret-auth-token"}
+
+function wait_for_influx() {
+    echo "Waiting for InfluxDB v3 to be ready..."
+    MAX_RETRIES=30
+    COUNT=0
+    while ! curl -s "$INFLUXDB_URL/ping" > /dev/null; do
+        sleep 1
+        COUNT=$((COUNT+1))
+        if [ $COUNT -ge $MAX_RETRIES ]; then
+            echo "❌ InfluxDB failed to start in time."
+            exit 1
+        fi
+    done
+    echo "✅ InfluxDB is up!"
+}
 
 case "$COMMAND" in
     start)
         echo "================================================="
-        echo "🚀 Starting Cisco Security Assistant Ecosystem..."
+        echo "🚀 Starting Cisco Foundation Sec 8B Ecosystem..."
         echo "================================================="
 
-        # Ensure models are downloaded
         ./download_models.sh
 
-        # Only run installation if virtual environment is missing
         if [ ! -d "ai_env" ]; then
-            echo "Environment not found. Starting first-time setup..."
+            echo "First-time setup: Creating environment..."
             ./install_metal.sh
-        else
-            echo "Virtual environment detected. Skipping setup."
         fi
 
-        # Ensure all Docker services (Qdrant, InfluxDB, Grafana) are running
-        echo "Starting backing services (Qdrant, InfluxDB v3, Grafana) via Docker Compose..."
+        echo "Starting backing services via Docker Compose..."
         docker compose up -d
 
-        echo "Initializing InfluxDB v3 Core Database..."
-        # Wait a few seconds for InfluxDB v3 API to be ready
-        sleep 5
-        docker exec cisco-foundation-sec-8b-macos-influxdb influxdb3 create database metrics --host http://localhost:8181 --token apiv3_cisco-super-secret-auth-token || true
+        wait_for_influx
 
-        echo "Activating environment..."
+        echo "Initializing InfluxDB Database..."
+        # Note: Using localhost:8181 here because we are running this on the host
+        docker exec cisco-foundation-sec-8b-macos-influxdb \
+            influxdb3 create database metrics \
+            --host http://localhost:8181 \
+            --token "$INFLUXDB_TOKEN" || true
+
         source ai_env/bin/activate
         
-        # Ensure latest requirements are installed (like influxdb-client)
-        pip install -r requirements.txt
+        echo "Verifying dependencies..."
+        pip install -q -r requirements.txt
 
         echo "================================================="
         echo "🧪 Running Unit Tests..."
@@ -41,42 +63,26 @@ case "$COMMAND" in
         python -m unittest discover tests/
         echo "✅ Unit Tests Passed!"
 
-        echo "Starting ASITOP HUD (Streamlit)..."
-        # Start Streamlit in the background, suppressing its output and detaching it
+        echo "Starting ASITOP HUD (Streamlit) in background..."
         streamlit run streamlit_app.py --server.headless=true > streamlit_hud.log 2>&1 &
-        STREAMLIT_PID=$!
-        echo "ASITOP HUD Started in background (PID: $STREAMLIT_PID)"
-
-        echo "Starting Chainlit application (Main Interface & Background Worker)..."
-        # Run chainlit in the foreground so the user can interact and see logs
+        
+        echo "Launching Chainlit Interface..."
         chainlit run ./main.py -w
         ;;
 
     stop)
-        echo "================================================="
-        echo "🛑 Stopping Cisco Security Assistant Ecosystem..."
-        echo "================================================="
+        echo "Stopping background processes..."
+        pkill -f "streamlit run streamlit_app.py" || true
+        pkill -f "chainlit run" || true
         
-        # Stop background Streamlit HUDs
-        echo "Stopping Streamlit instances..."
-        pkill -f "streamlit run streamlit_app.py" || echo "No Streamlit process found."
-        
-        # Stop Chainlit instances (in case they were running in bg)
-        echo "Stopping Chainlit instances..."
-        pkill -f "chainlit run" || echo "No Chainlit process found."
-
-        # Stop Docker composition
-        echo "Stopping backing services (Qdrant, InfluxDB v3, Grafana)..."
+        echo "Stopping Docker containers..."
         docker compose down
         
-        echo "✅ All services successfully shut down."
+        echo "✅ System shut down."
         ;;
 
     *)
         echo "Usage: ./run.sh [start | stop]"
-        echo "  start : Download models, start Docker backing services (Qdrant/InfluxDB),"
-        echo "          start Streamlit HUD in the background, and launch Chainlit App/Worker."
-        echo "  stop  : Shut down all background Python processes and stop Docker containers."
         exit 1
         ;;
 esac

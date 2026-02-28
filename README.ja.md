@@ -28,7 +28,7 @@
 
 ## コアコンポーネント
 
-1. **フロントエンドインターフェース**: Chainlit (`cisco_security_chainlit.py`) を使用して会話形式のAIインターフェースを構築し、リアルタイムでのテキストストリーミングとチャット履歴をサポートします。
+1. **フロントエンドインターフェース**: Chainlit (`main.py`) を使用して会話形式のAIインターフェースを構築し、リアルタイムでのテキストストリーミングとチャット履歴をサポートします。
 2. **多言語サポート**: **Llama-3-Taiwan-8B-Instruct**を通じて、意図の分類、多言語理解、および翻訳を処理します。Chainlitのローカライズにより20以上の言語をサポートしています。
 3. **セキュリティエクスパート**: サイバーセキュリティ領域に特化してファインチューニングされた**Foundation-Sec-8B**により、詳細なシステムおよびセキュリティログ分析を実行します。
 4. **ハードウェアアクセラレーション**: macOS Metal (MPS)と`llama-cpp-python`を統合し、Apple Silicon上での推論パフォーマンスを最大化します。
@@ -51,7 +51,7 @@
 ├── models/                     # GGUFモデルの保存先 (Llama-3 および Foundation-Sec)
 ├── qdrant_storage/             # Qdrantベクトルデータベースの永続的保存先ディレクトリ
 ├── public/                     # カスタムブランディング資産 (ロゴ、CSS、テーマ)
-├── cisco_security_chainlit.py  # Chainlitメインアプリケーションファイル
+├── main.py  # Chainlitメインアプリケーションファイル
 ├── playbooks.json              # RAG取り込み用の集約されたセキュリティSOP/プレイブック
 ├── download_models.sh          # 必要なHuggingFace GGUFモデルの自動ダウンロード
 ├── install_metal.sh            # macOS Metal環境、Venvのセットアップ、MPS依存関係のインストール
@@ -83,7 +83,7 @@
     -   `./install_metal.sh`: Homebrewを自動的にインストールし、Xcode CLTsを確認し、Metalをサポートする`llama-cpp-python`を備えたPython仮想環境（`ai_env`）をセットアップします。
     -   **Docker Compose**: `cisco-foundation-sec-8b-macos-qdrant`という名前のサービスを確認して起動します。
     -   **自動RAG同期**: アプリケーション起動時に`playbooks.json`を読み込み、Qdrantナレッジベースを自動更新します。
-    -   パッケージの依存関係を更新後、`cisco_security_chainlit.py`ウェブサービスを起動します。
+    -   パッケージの依存関係を更新後、`main.py`ウェブサービスを起動します。
 
 ### 方法 2: 手動起動 (初回セットアップ完了後に推奨)
 
@@ -97,7 +97,7 @@
 2. **仮想環境を有効化し、Chainlitを起動**:
    ```bash
    source ai_env/bin/activate
-   chainlit run ./cisco_security_chainlit.py -w
+   chainlit run ./main.py -w
    ```
 
 ### チャットの開始

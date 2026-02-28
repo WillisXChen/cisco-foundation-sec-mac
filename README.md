@@ -28,12 +28,12 @@ This project is a bilingual (Chinese/English) security analysis smart assistant 
 
 ## Core Project Components
 
-1. **Frontend Interface**: Uses Chainlit (`cisco_security_chainlit.py`) to build a conversational AI interface, supporting real-time text streaming and chat history.
+1. **Frontend Interface**: Uses Chainlit (`main.py`) to build a conversational AI interface, supporting real-time text streaming and chat history.
 2. **Multi-language Support**: Handles intent classification, multi-language understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Supports 20+ interface languages via Chainlit localization.
 3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain.
 4. **Hardware Acceleration**: Integrates macOS Metal (MPS) with `llama-cpp-python` to maximize inference performance on Apple Silicon.
 5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system now features **automatic RAG synchronization** on startup.
-6. **Refined User Experience**: Includes custom branding assets (`public/`), support for dark/light themes, localized welcome screens, and real-time inference latency tracking ("Thought for X seconds").
+6. **Performance Dashboard**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) and historical data tracking (InfluxDB v3 + Grafana).
 
 ## System Requirements
 
@@ -47,14 +47,16 @@ This project is a bilingual (Chinese/English) security analysis smart assistant 
 
 ```text
 .
-├── ai_env/                     # Python virtual environment
+├── core/                       # Core system logic (LLM, Database, Hardware, Config)
 ├── models/                     # GGUF model storage (Llama-3 and Foundation-Sec)
 ├── qdrant_storage/             # Persistent storage directory for Qdrant vector database
+├── influxdb3_storage/          # Persistent storage for metrics
+├── grafana_storage/            # Grafana dashboard storage
 ├── public/                     # Custom branding assets (logos, CSS, themes)
-├── cisco_security_chainlit.py  # Main Chainlit application file
+├── main.py                     # Main Chainlit application entry point
+├── streamlit_app.py            # ASITOP HUD Monitoring interface
 ├── playbooks.json              # Centralized security SOPs/Playbooks for RAG ingestion
-├── download_models.sh          # Auto-downloads required HuggingFace GGUF models
-├── install_metal.sh            # Configures macOS Metal environment, Venv, and installs MPS dependencies
+├── .env                        # Environment variables and secrets
 ├── run.sh                      # Smart execution script (automates setup, skips re-compilation if ready)
 └── (Other config files and scripts)
 ```
@@ -83,7 +85,7 @@ The project provides a one-click startup script that will automatically install 
    - `./install_metal.sh`: Automatically installs Homebrew, checks Xcode CLTs, and sets up the Python virtual environment (`ai_env`) with Metal-supported `llama-cpp-python`.
    - **Docker Compose**: Checks for and starts the service named `cisco-foundation-sec-8b-macos-qdrant`.
    - **Automatic RAG Sync**: The application automatically reads `playbooks.json` and updates the Qdrant knowledge base on startup.
-   - Starts the `cisco_security_chainlit.py` web service after updating package dependencies.
+   - Starts the `main.py` web service after updating package dependencies.
 
 ### Method 2: Manual Startup (Recommended after Initial Setup)
 
@@ -97,7 +99,7 @@ If you have already successfully executed `run.sh` and downloaded all environmen
 2. **Activate the virtual environment and start Chainlit**:
    ```bash
    source ai_env/bin/activate
-   chainlit run ./cisco_security_chainlit.py -w
+   chainlit run ./main.py -w
    ```
 
 ### Start Chatting
