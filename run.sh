@@ -35,6 +35,12 @@ case "$COMMAND" in
         # Ensure latest requirements are installed (like influxdb-client)
         pip install -r requirements.txt
 
+        echo "================================================="
+        echo "🧪 Running Unit Tests..."
+        echo "================================================="
+        python -m unittest discover tests/
+        echo "✅ Unit Tests Passed!"
+
         echo "Starting ASITOP HUD (Streamlit)..."
         # Start Streamlit in the background, suppressing its output and detaching it
         streamlit run streamlit_app.py --server.headless=true > streamlit_hud.log 2>&1 &
@@ -43,7 +49,7 @@ case "$COMMAND" in
 
         echo "Starting Chainlit application (Main Interface & Background Worker)..."
         # Run chainlit in the foreground so the user can interact and see logs
-        chainlit run ./cisco_security_chainlit.py -w
+        chainlit run ./main.py -w
         ;;
 
     stop)
