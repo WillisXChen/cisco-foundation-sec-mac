@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardware Monitor – Apple M-Series</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #030c18;
+      color: #00e5ff;
+      min-height: 100vh;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 6s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes gridMove { 0%{background-position:0 0;} 100%{background-position:40px 40px;} }
+
+    .container { position: relative; z-index: 1; }
+
+    /* Header */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(0,255,255,0.3);
+      padding-bottom: 10px; margin-bottom: 14px;
+    }
+    header h1 { font-size: 14px; color: #00e5ff; letter-spacing: 2px; text-transform: uppercase; }
+    .chip-badge {
+      font-size: 10px; background: rgba(0,255,255,0.1);
+      border: 1px solid rgba(0,255,255,0.3); border-radius: 4px;
+      padding: 2px 8px; color: #00e5ff;
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #00ff66; box-shadow: 0 0 6px #00ff66;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* Stat rows */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 14px;
+    }
+    .stat-card {
+      background: rgba(0,20,40,0.7);
+      border: 1px solid rgba(0,255,255,0.15);
+      border-radius: 6px; padding: 8px 12px;
+    }
+    .stat-label { font-size: 9px; color: rgba(0,229,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-size: 18px; font-weight: 700; margin: 2px 0; }
+    .stat-sub { font-size: 9px; color: rgba(0,229,255,0.5); }
+
+    /* Bar indicators */
+    .bar-wrap { height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+    /* Charts */
+    .chart-section { margin-bottom: 14px; }
+    .chart-title { font-size: 10px; color: rgba(0,229,255,0.6); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .chart-box {
+      background: rgba(0,20,40,0.6);
+      border: 1px solid rgba(0,255,255,0.12);
+      border-radius: 8px; padding: 8px;
+    }
+    canvas { display: block; }
+
+    /* Power section */
+    .power-row {
+      display: flex; gap: 8px;
+      background: rgba(0,20,40,0.7);
+      border: 1px solid rgba(255,150,0,0.3);
+      border-radius: 6px; padding: 8px 12px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .power-item { flex: 1; text-align: center; }
+    .power-label { font-size: 9px; color: rgba(255,150,0,0.6); text-transform: uppercase; }
+    .power-value { font-size: 15px; font-weight: 700; color: #ff9900; }
+
+    /* Footer */
+    footer { text-align: center; font-size: 9px; color: rgba(0,229,255,0.3); }
+    #last-update { display: inline; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="status-dot" id="live-dot"></div>
+      <h1>🚀 ASITOP HUD</h1>
+    </div>
+    <span class="chip-badge" id="chip-label">Apple M-Series</span>
+  </header>
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">E-CPU Avg</div>
+      <div class="stat-value" id="val-ecpu" style="color:#a8ff78;">0%</div>
+      <div class="stat-sub" id="sub-ecpu">— MHz</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-ecpu" style="width:0%;background:#a8ff78;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">P-CPU Avg</div>
+      <div class="stat-value" id="val-pcpu" style="color:#00ff66;">0%</div>
+      <div class="stat-sub" id="sub-pcpu">— MHz</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-pcpu" style="width:0%;background:#00ff66;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">GPU</div>
+      <div class="stat-value" id="val-gpu" style="color:#33ccff;">0%</div>
+      <div class="stat-sub" id="sub-gpu">— Cores</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-gpu" style="width:0%;background:#33ccff;"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">RAM</div>
+      <div class="stat-value" id="val-ram" style="color:#ff9900;">0%</div>
+      <div class="stat-sub" id="sub-ram">0 / 0 GB</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-ram" style="width:0%;background:#ff9900;"></div></div>
+    </div>
+  </div>
+
+  <!-- Power Row -->
+  <div class="power-row">
+    <div class="power-item">
+      <div class="power-label">⚡ CPU Power</div>
+      <div class="power-value" id="val-cpu-power">—</div>
+    </div>
+    <div class="power-item">
+      <div class="power-label">⚡ GPU Power</div>
+      <div class="power-value" id="val-gpu-power">—</div>
+    </div>
+    <div class="power-item">
+      <div class="power-label">⚡ Total Power</div>
+      <div class="power-value" id="val-total-power">—</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-title">📈 Real-Time Performance History (last 30 readings)</div>
+    <div class="chart-box">
+      <canvas id="perfChart" height="160"></canvas>
+    </div>
+  </div>
+
+  <footer>
+    Auto-refresh every 5s &nbsp;|&nbsp; Last update: <span id="last-update">—</span>
+  </footer>
+</div>
+
+<script>
+  const MAX_POINTS = 30;
+  const labels = Array(MAX_POINTS).fill('');
+  const initData = () => Array(MAX_POINTS).fill(0);
+
+  const datasets = {
+    ecpu: initData(),
+    pcpu: initData(),
+    gpu:  initData(),
+    ram:  initData()
+  };
+
+  const ctx = document.getElementById('perfChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'E-CPU %', data: datasets.ecpu, borderColor: '#a8ff78', backgroundColor: 'rgba(168,255,120,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2 },
+        { label: 'P-CPU %', data: datasets.pcpu, borderColor: '#00ff66', backgroundColor: 'rgba(0,255,102,0.10)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2 },
+        { label: 'GPU %',   data: datasets.gpu,  borderColor: '#33ccff', backgroundColor: 'rgba(51,204,255,0.10)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2 },
+        { label: 'RAM %',   data: datasets.ram,  borderColor: '#ff9900', backgroundColor: 'rgba(255,153,0,0.05)', tension: 0.4, fill: false, pointRadius: 0, borderWidth: 2 }
+      ]
+    },
+    options: {
+      animation: { duration: 600 },
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { display: false },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: 'rgba(0,229,255,0.4)', font: { size: 9 }, callback: v => v + '%' },
+          grid: { color: 'rgba(0,229,255,0.06)' },
+          border: { color: 'transparent' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: 'rgba(0,229,255,0.7)', font: { size: 9, family: 'JetBrains Mono' }, boxWidth: 12, padding: 10 }
+        }
+      }
+    }
+  });
+
+  function pushData(key, value) {
+    datasets[key].shift();
+    datasets[key].push(value);
+  }
+
+  function setBar(id, pct) {
+    document.getElementById(id).style.width = Math.min(pct, 100) + '%';
+  }
+
+  async function fetchAndUpdate() {
+    try {
+      const res = await fetch('/hw-stats');
+      if (!res.ok) return;
+      const d = await res.json();
+
+      // Stat values
+      document.getElementById('val-ecpu').textContent = d.e_cpu_pct.toFixed(1) + '%';
+      document.getElementById('val-pcpu').textContent = d.p_cpu_pct.toFixed(1) + '%';
+      document.getElementById('val-gpu').textContent  = d.gpu_pct + '%';
+      document.getElementById('val-ram').textContent  = d.ram_pct.toFixed(1) + '%';
+
+      document.getElementById('sub-ecpu').textContent = d.e_cores + ' E-Cores';
+      document.getElementById('sub-pcpu').textContent = d.p_cores + ' P-Cores';
+      document.getElementById('sub-gpu').textContent  = d.gpu_cores + ' GPU Cores';
+      document.getElementById('sub-ram').textContent  = d.ram_used_gb.toFixed(1) + ' / ' + d.ram_total_gb.toFixed(1) + ' GB';
+
+      setBar('bar-ecpu', d.e_cpu_pct);
+      setBar('bar-pcpu', d.p_cpu_pct);
+      setBar('bar-gpu',  d.gpu_pct);
+      setBar('bar-ram',  d.ram_pct);
+
+      // Power
+      document.getElementById('val-cpu-power').textContent  = d.cpu_power_w >= 0 ? d.cpu_power_w.toFixed(2) + ' W' : 'N/A';
+      document.getElementById('val-gpu-power').textContent  = d.gpu_power_w >= 0 ? d.gpu_power_w.toFixed(2) + ' W' : 'N/A';
+      document.getElementById('val-total-power').textContent = d.total_power_w >= 0 ? d.total_power_w.toFixed(2) + ' W' : 'N/A';
+
+      document.getElementById('chip-label').textContent = d.chip_label || 'Apple M-Series';
+
+      // Push to chart
+      pushData('ecpu', d.e_cpu_pct);
+      pushData('pcpu', d.p_cpu_pct);
+      pushData('gpu',  d.gpu_pct);
+      pushData('ram',  d.ram_pct);
+      chart.data.datasets[0].data = [...datasets.ecpu];
+      chart.data.datasets[1].data = [...datasets.pcpu];
+      chart.data.datasets[2].data = [...datasets.gpu];
+      chart.data.datasets[3].data = [...datasets.ram];
+      chart.update();
+
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    } catch (e) {
+      console.warn('hw-stats fetch error:', e);
+    }
+  }
+
+  // Initial fetch then poll every 5s
+  fetchAndUpdate();
+  setInterval(fetchAndUpdate, 5000);
+</script>
+</body>
+</html>

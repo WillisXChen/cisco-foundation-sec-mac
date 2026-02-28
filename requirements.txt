@@ -1,3 +1,11 @@
 chainlit
 qdrant-client
 fastembed
+psutil
+plotly
+pandas
+strawberry-graphql[fastapi]
+streamlit
+requests
+asitop
+influxdb-client

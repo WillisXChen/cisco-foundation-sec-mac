@@ -9,3 +9,28 @@ services:
     volumes:
       - ./qdrant_storage:/qdrant/storage
     restart: unless-stopped
+
+  cisco-foundation-sec-8b-macos-influxdb:
+    image: influxdb:3-core
+    container_name: cisco-foundation-sec-8b-macos-influxdb
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./influxdb3_storage:/var/lib/influxdb3
+      - ./influxdb3_token.txt:/token.txt:ro
+    command: serve --node-id macos-node --object-store file --data-dir /var/lib/influxdb3 --admin-token-file /token.txt
+    restart: unless-stopped
+
+  cisco-foundation-sec-8b-macos-grafana:
+    image: grafana/grafana:latest
+    container_name: cisco-foundation-sec-8b-macos-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana_storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=adminadmin
+    depends_on:
+      - cisco-foundation-sec-8b-macos-influxdb
+    restart: unless-stopped

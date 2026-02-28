@@ -4,3 +4,6 @@ models
 .chainlit/
 __pycache__/
 ai_env/
+influxdb_storage
+influxdb3_storage
+grafana_storage

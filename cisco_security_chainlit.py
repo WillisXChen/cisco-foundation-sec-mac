@@ -1,10 +1,256 @@
 import asyncio
 import time
+import typing
+import engineio
+engineio.payload.Payload.max_decode_packets = 500000
+
 import chainlit as cl
 import os
 import json
+
+# Ensure internal files directory exists to prevent Chainlit plotting issues
+os.makedirs(".files", exist_ok=True)
+
+import psutil
+import subprocess
+import re
+import platform
+import pandas as pd
+import plotly.graph_objects as go
+import strawberry
+from strawberry.fastapi import GraphQLRouter
+from chainlit.server import app as fastapi_app
+from collections import deque
 from llama_cpp import Llama
 from qdrant_client import QdrantClient
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
+
+INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8181")
+INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", "apiv3_cisco-super-secret-auth-token")
+INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", "cisco")
+INFLUXDB_BUCKET = os.getenv("INFLUXDB_BUCKET", "metrics")
+
+# --- Hardware Monitoring Utils ---
+def get_macos_hw_stats():
+    """Collect all hardware metrics: CPU, GPU, RAM, power. No sudo required."""
+    stats = {
+        "e_cpu_pct": 0.0, "p_cpu_pct": 0.0,
+        "gpu_pct": 0, "gpu_cores": ST_GPU_CORES,
+        "ram_pct": 0.0, "ram_used_gb": 0.0, "ram_total_gb": ST_RAM_TOTAL,
+        "e_cores": ST_E_CORES, "p_cores": ST_P_CORES,
+        "cpu_power_w": -1, "gpu_power_w": -1, "total_power_w": -1,
+        "chip_label": ST_CHIP_LABEL
+    }
+    try:
+        percpu = psutil.cpu_percent(percpu=True)
+        stats["e_cpu_pct"] = sum(percpu[:ST_E_CORES]) / ST_E_CORES if ST_E_CORES > 0 else sum(percpu) / len(percpu)
+        stats["p_cpu_pct"] = sum(percpu[ST_E_CORES:]) / ST_P_CORES if ST_P_CORES > 0 else stats["e_cpu_pct"]
+
+        mem = psutil.virtual_memory()
+        stats["ram_pct"] = mem.percent
+        stats["ram_used_gb"] = mem.used / (1024**3)
+    except Exception:
+        pass
+
+    # Try ASITOP style powermetrics first (requires sudo)
+    try:
+        import plistlib
+        pm_res = subprocess.check_output(
+            ['sudo', '-n', 'powermetrics', '-n', '1', '-i', '50', '--samplers', 'cpu_power,gpu_power', '-f', 'plist'],
+            stderr=subprocess.DEVNULL, timeout=2
+        )
+        plist_data = plistlib.loads(pm_res)
+        proc_data = plist_data.get('processor', {})
+        if 'cpu_energy' in proc_data:
+            stats["cpu_power_w"] = round(proc_data['cpu_energy'] / 1000.0, 2)
+        if 'gpu_energy' in proc_data:
+            stats["gpu_power_w"] = round(proc_data['gpu_energy'] / 1000.0, 2)
+        if 'combined_power' in proc_data:
+            stats["total_power_w"] = round(proc_data['combined_power'] / 1000.0, 2)
+        elif 'processor_energy' in proc_data:
+            stats["total_power_w"] = round(proc_data['processor_energy'] / 1000.0, 2)
+        elif stats["cpu_power_w"] != -1 and stats["gpu_power_w"] != -1:
+            ane_power_w = proc_data.get('ane_energy', 0) / 1000.0
+            stats["total_power_w"] = round(stats["cpu_power_w"] + stats["gpu_power_w"] + ane_power_w, 2)
+    except Exception:
+        pass
+
+    try:
+        # GPU utilization via ioreg (no sudo)
+        ioreg_res = subprocess.check_output(['ioreg', '-r', '-d', '1', '-c', 'IOAccelerator'],
+                                            stderr=subprocess.DEVNULL, timeout=2).decode()
+        m = re.search(r'"Device Utilization %"=(\d+)', ioreg_res)
+        if m:
+            stats["gpu_pct"] = int(m.group(1))
+        # Try GPU power from PerformanceStatistics
+        m_gpow = re.search(r'"GPU Power"[\s:=]+(\d+\.?\d*)', ioreg_res)
+        if m_gpow:
+            stats["gpu_power_w"] = float(m_gpow.group(1)) / 1000.0
+    except Exception:
+        pass
+    try:
+        # CPU/total power estimate via battery discharge rate (works on MacBooks, no sudo)
+        bat = psutil.sensors_battery()
+        if bat and not bat.power_plugged:
+            # Discharge rate isn't directly available via psutil on macOS easily
+            pass
+        # Try ioreg AppleSmartBattery for live power
+        bat_res = subprocess.check_output(
+            ['ioreg', '-r', '-d', '1', '-c', 'AppleSmartBattery'],
+            stderr=subprocess.DEVNULL, timeout=2).decode()
+        current_m  = re.search(r'"InstantAmperage"=(\d+)', bat_res)
+        voltage_m  = re.search(r'"Voltage"=(\d+)', bat_res)
+        if current_m and voltage_m:
+            amps = int(current_m.group(1))
+            # InstantAmperage can be unsigned; treat >0x7fffffff as negative (discharge)
+            if amps > 0x7FFFFFFF:
+                amps = -(0x100000000 - amps)
+            if amps < 0:  # discharging = consuming power
+                volts = int(voltage_m.group(1)) / 1000.0  # mV -> V
+                total_w = abs(amps) * volts / 1000.0  # mA * V / 1000
+                stats["total_power_w"] = round(total_w, 2)
+    except Exception:
+        pass
+    return stats
+
+def get_macos_gpu_info():
+    """Get GPU core count (used at startup only)."""
+    gpu_cores = "N/A"
+    if platform.system() != "Darwin":
+        return gpu_cores
+    try:
+        sp = subprocess.check_output(['system_profiler', 'SPDisplaysDataType'],
+                                     stderr=subprocess.DEVNULL, timeout=5).decode()
+        for line in sp.split('\n'):
+            if 'Total Number of Cores' in line:
+                gpu_cores = line.strip().split(':')[-1].strip()
+                break
+    except Exception:
+        pass
+    return gpu_cores
+
+def get_chip_label():
+    """Get Apple chip label (M1/M2/M3...) from system_profiler."""
+    try:
+        res = subprocess.check_output(['system_profiler', 'SPHardwareDataType'],
+                                      stderr=subprocess.DEVNULL, timeout=5).decode()
+        for line in res.split('\n'):
+            # Match "  Chip: Apple M2" or "  Apple M2" style lines
+            if 'Chip:' in line or 'chip:' in line:
+                return line.strip().split(':', 1)[-1].strip()
+        # Fallback: look for Apple M in any line
+        for line in res.split('\n'):
+            if 'Apple M' in line:
+                # Extract "Apple M2" or similar
+                import re as _re
+                m = _re.search(r'Apple M\d+\s*\w*', line)
+                if m:
+                    return m.group(0).strip()
+    except Exception:
+        pass
+    return "Apple M-Series"
+
+# Pre-calculate steady core stats (only once at startup)
+ST_CPU_COUNT = psutil.cpu_count()
+ST_E_CORES = 4 if ST_CPU_COUNT >= 8 else 0
+ST_P_CORES = ST_CPU_COUNT - ST_E_CORES
+ST_RAM_TOTAL = round(psutil.virtual_memory().total / (1024**3), 2)
+ST_GPU_CORES = get_macos_gpu_info()
+ST_CHIP_LABEL = get_chip_label()
+
+# === psutil warmup ===
+# cpu_percent() ALWAYS returns 0.0 on the very first call (it needs an interval baseline)
+# Call it once now to initialise the internal counter so all subsequent calls return real data.
+psutil.cpu_percent(percpu=True)  # discard the zeroed result
+
+# Shared latest stats dict (written by monitor task)
+_latest_hw_stats = get_macos_hw_stats()
+
+import sys
+if __name__ not in sys.modules:
+    sys.modules[__name__] = sys.modules['__main__']
+
+# === GraphQL Real-time Endpoint ===
+@strawberry.type
+class HWStats:
+    e_cpu_pct: float
+    p_cpu_pct: float
+    gpu_pct: int
+    ram_pct: float
+    ram_used_gb: float
+    ram_total_gb: float
+    e_cores: int
+    p_cores: int
+    gpu_cores: str
+    cpu_power_w: float
+    gpu_power_w: float
+    total_power_w: float
+    chip_label: str
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def current_stats(self) -> HWStats:
+        return HWStats(**_latest_hw_stats)
+
+@strawberry.type
+class Subscription:
+    @strawberry.subscription
+    async def watch_stats(self) -> typing.AsyncGenerator[HWStats, None]:
+        """Real-time subscription that yields hardware stats every 2 seconds."""
+        while True:
+            yield HWStats(**_latest_hw_stats)
+            await asyncio.sleep(2)
+
+
+schema = strawberry.Schema(query=Query, subscription=Subscription)
+graphql_app = GraphQLRouter(schema)
+fastapi_app.include_router(graphql_app, prefix="/graphql")
+
+# History for charts (kept server-side for the monitor task text update)
+MAX_HISTORY = 30
+history_ecpu = deque([0]*MAX_HISTORY, maxlen=MAX_HISTORY)
+history_pcpu = deque([0]*MAX_HISTORY, maxlen=MAX_HISTORY)
+history_gpu = deque([0]*MAX_HISTORY, maxlen=MAX_HISTORY)
+history_ram = deque([0]*MAX_HISTORY, maxlen=MAX_HISTORY)
+
+async def hardware_monitor_task():
+    """Background task: update global stats dict for GraphQL every 2s, and write to InfluxDB."""
+    global _latest_hw_stats
+    
+    # Initialize InfluxDB Client
+    try:
+        influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+        write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+    except Exception as e:
+        print(f"InfluxDB Connection error: {e}")
+        write_api = None
+
+    while True:
+        try:
+            stats = await asyncio.to_thread(get_macos_hw_stats)
+            _latest_hw_stats = stats
+            
+            if write_api:
+                # Create a Point and write to InfluxDB
+                p = Point("hardware_monitor") \
+                    .tag("host", "mac_server") \
+                    .tag("chip", stats["chip_label"]) \
+                    .field("e_cpu_pct", float(stats.get("e_cpu_pct", 0))) \
+                    .field("p_cpu_pct", float(stats.get("p_cpu_pct", 0))) \
+                    .field("gpu_pct", float(stats.get("gpu_pct", 0))) \
+                    .field("ram_pct", float(stats.get("ram_pct", 0))) \
+                    .field("ram_used_gb", float(stats.get("ram_used_gb", 0))) \
+                    .field("cpu_power_w", float(stats.get("cpu_power_w", 0))) \
+                    .field("gpu_power_w", float(stats.get("gpu_power_w", 0))) \
+                    .field("total_power_w", float(stats.get("total_power_w", 0)))
+                # Await writing to avoid blocking event loop
+                await asyncio.to_thread(write_api.write, bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=p)
+
+        except Exception as e:
+            print(f"Monitor error: {e}")
+        await asyncio.sleep(2)
 
 # === Configuration ===
 # Set default model paths, can be overridden via environment variables
@@ -52,10 +298,22 @@ def load_model(model_path: str, context_size: int = 4096):
 @cl.on_chat_start
 async def on_chat_start():
     global llm_llama3, llm_sec, qdrant_client
+    
+    # 1. Initialize Top-Bar HUD with iframe (sent ONCE, Streamlit handles its own refresh inside the iframe)
+    content = (
+        f"### 🚀 ASITOP HUD `{ST_CHIP_LABEL}`\n"
+        f"<iframe src='http://localhost:8501/?embed=true' width='100%' height='320' frameborder='0' style='border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.4); background: #0d1117;'></iframe>\n"
+    )
+    
+    actions = [
+        cl.Action(name="view_hw_history", payload={"action": "show"}, description="查看歷史硬體資源與電力消耗數據")
+    ]
+    stats_msg = cl.Message(content=content, author="H/W Monitor", actions=actions)
+    await stats_msg.send()
+    
+    # 2. Start background task to fetch metrics for GraphQL
+    asyncio.create_task(hardware_monitor_task())
 
-    # Send loading message to user (Show before model starts loading to inform them to wait)
-    # Note: During on_chat_start execution, Chainlit automatically locks the input field,
-    #       until this function completes fully, ensuring input unlocks only when models are ready.
     loading_msg = cl.Message(content="### ⚙️ 系統初始化中... 正在載入 AI 模型，請稍候。")
     await loading_msg.send()
 
@@ -86,21 +344,27 @@ async def on_chat_start():
         await loading_msg.update()
         
         collection_name = "security_playbooks"
-        # Check if collection exists or has documents (Simplified: just attempt to ingest)
-        playbooks_path = os.path.join(os.path.dirname(__file__), "playbooks.json")
-        if os.path.exists(playbooks_path):
-            with open(playbooks_path, "r", encoding="utf-8") as f:
-                docs_data = json.load(f)
-                docs = [d["content"] for d in docs_data]
-                metadatas = [{"title": d["title"]} for d in docs_data]
-                ids = [d["id"] for d in docs_data]
-                await asyncio.to_thread(
-                    qdrant_client.add,
-                    collection_name=collection_name,
-                    documents=docs,
-                    metadata=metadatas,
-                    ids=ids
-                )
+        
+        # Check if collection exists to avoid 409 Conflict (Collection already exists)
+        # We use a synchronous check within to_thread or check list_collections
+        collections = await asyncio.to_thread(qdrant_client.get_collections)
+        exists = any(c.name == collection_name for c in collections.collections)
+        
+        if not exists:
+            playbooks_path = os.path.join(os.path.dirname(__file__), "playbooks.json")
+            if os.path.exists(playbooks_path):
+                with open(playbooks_path, "r", encoding="utf-8") as f:
+                    docs_data = json.load(f)
+                    docs = [d["content"] for d in docs_data]
+                    metadatas = [{"title": d["title"]} for d in docs_data]
+                    ids = [d["id"] for d in docs_data]
+                    await asyncio.to_thread(
+                        qdrant_client.add,
+                        collection_name=collection_name,
+                        documents=docs,
+                        metadata=metadatas,
+                        ids=ids
+                    )
 
         loading_msg.content = "### ✅ 模型載入完成！\n\n🛡️ **歡迎使用 Foundation-Sec-8B Security Assistant!** 🛡️\n\n您可以開始輸入有關資安、程式設計或一般問題。"
         await loading_msg.update()
@@ -221,7 +485,13 @@ async def main(message: cl.Message):
 
         usage_main = None
         gen_start_time = time.time()  # ⏱️ Start timing
-        for chunk in stream:
+        
+        while True:
+            # Yield control back to event loop, fetching Llama chunk safely from a background thread!
+            chunk = await asyncio.to_thread(next, stream, None)
+            if chunk is None:
+                break
+                
             if "usage" in chunk and chunk["usage"]:
                 usage_main = chunk["usage"]
             if "choices" in chunk and len(chunk["choices"]) > 0:
@@ -275,7 +545,12 @@ async def main(message: cl.Message):
 
                 trans_usage = None
                 trans_start_time = time.time()  # ⏱️ Start translation timing
-                for chunk in trans_stream:
+                
+                while True:
+                    chunk = await asyncio.to_thread(next, trans_stream, None)
+                    if chunk is None:
+                        break
+                        
                     if "usage" in chunk and chunk["usage"]:
                         trans_usage = chunk["usage"]
                     if "choices" in chunk and len(chunk["choices"]) > 0:
@@ -318,3 +593,69 @@ async def main(message: cl.Message):
     except Exception as e:
         error_msg = f"❌ 產生回應時發生錯誤: {e}"
         await cl.Message(content=error_msg, author="System").send()
+
+@cl.action_callback("view_hw_history")
+async def on_action_view_hw_history(action: cl.Action):
+    """Query InfluxDB and plot historical statistics."""
+    await cl.Message(content="📊 正在從 InfluxDB 提取歷史數據...", author="System").send()
+    try:
+        # InfluxDB v3 Core drops Flux support (/api/v2/query returns 404). 
+        # We must use InfluxQL via the /query endpoint (compatible with v1/v3)
+        import requests
+        headers = {
+            "Authorization": f"Token {INFLUXDB_TOKEN}"
+        }
+        params = {
+            "db": INFLUXDB_BUCKET,
+            "q": "SELECT * FROM hardware_monitor WHERE time >= now() - 15m"
+        }
+        res = await asyncio.to_thread(requests.get, f"{INFLUXDB_URL}/query", headers=headers, params=params)
+        res_json = res.json()
+        
+        results = res_json.get("results", [])
+        if not results or "series" not in results[0]:
+            await cl.Message(content="⚠️ 尚未收集到足夠的歷史數據。請稍後再試。", author="System").send()
+            return
+
+        series = results[0]["series"][0]
+        columns = series["columns"]
+        values = series["values"]
+        df = pd.DataFrame(values, columns=columns)
+
+        # Ensure _time is datetime
+        if 'time' in df.columns:
+            df['_time'] = pd.to_datetime(df['time'])
+
+        # Create Plotly figure
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+        
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                            subplot_titles=("CPU / GPU / RAM 使用率 (%)", "電力消耗 (Watt)"))
+        
+        if 'e_cpu_pct' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['e_cpu_pct'], name="E-CPU %", mode='lines'), row=1, col=1)
+        if 'p_cpu_pct' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['p_cpu_pct'], name="P-CPU %", mode='lines'), row=1, col=1)
+        if 'gpu_pct' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['gpu_pct'], name="GPU %", mode='lines'), row=1, col=1)
+        if 'ram_pct' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['ram_pct'], name="RAM %", line=dict(dash='dot')), row=1, col=1)
+
+        if 'cpu_power_w' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['cpu_power_w'], name="CPU W", mode='lines'), row=2, col=1)
+        if 'gpu_power_w' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['gpu_power_w'], name="GPU W", mode='lines'), row=2, col=1)
+        if 'total_power_w' in df.columns:
+            fig.add_trace(go.Scatter(x=df['_time'], y=df['total_power_w'], name="Total W", mode='lines'), row=2, col=1)
+
+        fig.update_layout(height=600, template="plotly_dark", title_text="最近 15 分鐘硬體資源消耗趨勢")
+        
+        # Send chart directly in Chainlit
+        elements = [
+            cl.Plotly("歷史監控圖表", figure=fig, display="inline")
+        ]
+        await cl.Message(content="✅ **歷史硬體狀態已生成**", elements=elements, author="H/W Monitor").send()
+
+    except Exception as e:
+        await cl.Message(content=f"❌ 讀取 InfluxDB 數據時發生錯誤: {e}", author="System").send()

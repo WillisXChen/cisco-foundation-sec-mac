@@ -334,3 +334,55 @@ header img,
   width: auto !important;
   object-fit: contain !important;
 }
+
+/* ===== Hardware Monitor Sticky Top HUD ===== */
+div[data-author="H/W Monitor"] {
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 1000 !important;
+  margin-bottom: 20px !important;
+  background: linear-gradient(135deg, rgba(0, 15, 30, 0.95), rgba(0, 30, 60, 0.9)) !important;
+  border: 1px solid rgba(0, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(0, 255, 255, 0.2) !important;
+  max-width: 100% !important;
+  padding: 15px 20px !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+div[data-author="H/W Monitor"] .cl-message-content {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 5px !important;
+}
+
+/* Format HW Monitor Markdown Table */
+div[data-author="H/W Monitor"] table {
+  width: 100% !important;
+  margin-top: 5px !important;
+  border-collapse: collapse !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+}
+
+div[data-author="H/W Monitor"] th {
+  color: rgba(0, 229, 255, 0.6) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  padding: 6px 12px !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2) !important;
+}
+
+div[data-author="H/W Monitor"] td {
+  padding: 6px 12px !important;
+  font-size: 0.85rem !important;
+  color: #eeeeee !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Ensure inline chart sits nicely below table */
+div[data-author="H/W Monitor"] [class*="element"] {
+  margin-top: 15px !important;
+  width: 100% !important;
+}

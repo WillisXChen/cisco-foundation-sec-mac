@@ -1,0 +1,4 @@
+{
+  "token": "apiv3_cisco-super-secret-auth-token",
+  "name": "_admin"
+}
