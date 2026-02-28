@@ -18,6 +18,7 @@ from core.hardware import HardwareMonitor
 from core.database import VectorDBManager, MetricsDBManager
 from core.llm import LLMManager
 from core.assistant_service import AssistantService
+from core.schema import schema, _latest_hw_stats_ref
 
 # Performance optimization for Large Payloads
 engineio.payload.Payload.max_decode_packets = 500000
@@ -29,45 +30,27 @@ llm_manager = LLMManager()
 vector_db = VectorDBManager(url=QDRANT_URL)
 assistant_service = AssistantService(llm_manager, vector_db)
 metrics_db = None  
+_monitor_task = None
 
-_latest_hw_stats = hw_monitor.get_stats()
-
-# --- GraphQL Schema ---
-@strawberry.type
-class HWStats:
-    e_cpu_pct: float; p_cpu_pct: float; gpu_pct: int; ram_pct: float;
-    ram_used_gb: float; ram_total_gb: float; e_cores: int; p_cores: int;
-    gpu_cores: str; cpu_power_w: float; gpu_power_w: float;
-    total_power_w: float; chip_label: str
-
-@strawberry.type
-class Query:
-    @strawberry.field
-    def current_stats(self) -> HWStats: return HWStats(**_latest_hw_stats)
-
-@strawberry.type
-class Subscription:
-    @strawberry.subscription
-    async def watch_stats(self) -> typing.AsyncGenerator[HWStats, None]:
-        while True:
-            yield HWStats(**_latest_hw_stats)
-            await asyncio.sleep(2)
-
-schema = strawberry.Schema(query=Query, subscription=Subscription)
 fastapi_app.include_router(GraphQLRouter(schema), prefix="/graphql")
 
 # --- Background Tasks ---
 async def hardware_monitor_task():
-    global _latest_hw_stats, metrics_db
-    try:
-        metrics_db = MetricsDBManager(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG, bucket=INFLUXDB_BUCKET)
-    except Exception as e:
-        logger.error(f"InfluxDB Connection error: {e}")
+    global metrics_db
+    if metrics_db is None:
+        try:
+            metrics_db = MetricsDBManager(
+                url=INFLUXDB_URL, token=INFLUXDB_TOKEN, 
+                org=INFLUXDB_ORG, bucket=INFLUXDB_BUCKET
+            )
+            logger.info("✅ Connected to InfluxDB v3 for hardware monitoring.")
+        except Exception as e:
+            logger.error(f"❌ InfluxDB Connection error: {e}")
 
     while True:
         try:
             stats = await asyncio.to_thread(hw_monitor.get_stats)
-            _latest_hw_stats = stats
+            _latest_hw_stats_ref.update(stats)
             if metrics_db:
                 await asyncio.to_thread(metrics_db.write_hardware_stats, stats)
         except Exception as e:
@@ -85,7 +68,9 @@ async def on_chat_start():
     actions = [cl.Action(name="view_hw_history", payload={"action": "show"}, description="查看歷史資源趨勢")]
     await cl.Message(content=hud_content, author="H/W Monitor", actions=actions).send()
     
-    asyncio.create_task(hardware_monitor_task())
+    global _monitor_task
+    if _monitor_task is None:
+        _monitor_task = asyncio.create_task(hardware_monitor_task())
 
     loading_msg = cl.Message(content="### ⚙️ 系統初始化中...")
     await loading_msg.send()

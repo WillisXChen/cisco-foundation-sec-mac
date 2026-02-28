@@ -30,9 +30,15 @@ class LLMManager:
         )
 
     def load_general_model(self, path: str, context_size: int = 4096):
+        if self.llm_general is not None:
+            logger.info("General model already loaded, skipping.")
+            return
         self.llm_general = self._load_model(path, context_size)
 
     def load_security_model(self, path: str, context_size: int = 4096):
+        if self.llm_sec is not None:
+            logger.info("Security model already loaded, skipping.")
+            return
         self.llm_sec = self._load_model(path, context_size)
 
     def classify_intent(self, user_input: str) -> bool:
