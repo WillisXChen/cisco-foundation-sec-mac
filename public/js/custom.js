@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const btn = document.createElement("button");
         btn.id = "hud-toggle-btn";
         btn.innerHTML = `
-            <img src="/public/performance.png" width="28" height="28" style="vertical-align: middle; position: relative; top: -1px; margin-right: 6px;" alt="icon">
+            <img src="/public/png/performance.png" width="28" height="28" style="vertical-align: middle; position: relative; top: -1px; margin-right: 6px;" alt="icon">
             <span style="vertical-align: middle; line-height: 1;">PerfMon</span>
         `;
 
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const historyBtn = document.createElement("button");
         historyBtn.id = "history-btn";
         historyBtn.innerHTML = `
-            <img src="/public/statisctics.png" width="22" height="22" style="vertical-align: middle; position: relative; top: -1px; margin-right: 6px;" alt="history">
+            <img src="/public/png/statisctics.png" width="22" height="22" style="vertical-align: middle; position: relative; top: -1px; margin-right: 6px;" alt="history">
             <span style="vertical-align: middle; line-height: 1;">History</span>
         `;
 
@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             panel.innerHTML = `
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; margin-bottom: 5px; color: #b8e8f8; font-weight: bold; background: transparent; padding: 5px 10px; display: flex; align-items: center; gap: 8px;">
-                    <img src="/public/performance.png" width="24" height="24" alt="icon">
+                    <img src="/public/png/performance.png" width="24" height="24" alt="icon">
                     <span style="padding-top: 1px;">PerfMon</span>
                 </div>
                 <iframe src='http://localhost:8501/?embed=true' width='100%' height='620' frameborder='0' style='border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.4); background: #0d1117;'></iframe>

@@ -27,7 +27,7 @@ async def on_chat_start():
     # Start background tasks
     services.start_hardware_monitor()
 
-    loading_msg = cl.Message(content="### ⚙️ 系統初始化中...", actions=actions)
+    loading_msg = cl.Message(content="### ⚙️ 系統初始化中...", actions=actions, author="System")
     await loading_msg.send()
 
     try:
@@ -147,7 +147,7 @@ async def on_action_view_hw_history(action: cl.Action):
             ),
             margin=dict(b=80)
         )
-        await cl.Message(content="✅ **歷史圖表已生成**", elements=[cl.Plotly("歷史監控", figure=fig, display="inline")], author="H/W Monitor").send()
+        await cl.Message(content="✅ **歷史圖表已生成**", elements=[cl.Plotly("歷史監控", figure=fig, display="inline")], author="Monitor").send()
     except Exception as e:
         logger.error(f"Plot error: {e}")
         await cl.Message(content=f"❌ 讀取數據錯誤: {e}", author="System").send()
