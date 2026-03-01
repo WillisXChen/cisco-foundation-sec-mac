@@ -33,7 +33,8 @@ This project is a bilingual (Chinese/English) security analysis smart assistant 
 3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain.
 4. **Hardware Acceleration**: Integrates macOS Metal (MPS) with `llama-cpp-python` to maximize inference performance on Apple Silicon.
 5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system now features **automatic RAG synchronization** on startup.
-6. **Performance Dashboard**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) and historical data tracking (InfluxDB v3 + Grafana).
+6. **Performance Dashboard & Floating Controls**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) and historical data tracking (InfluxDB v3 + Grafana). Includes floating "PerfMon" and "History" buttons for instant access.
+7. **Enhanced Accessibility**: Persistent **top-center language selector** with flag icons for seamless switching between English and Traditional Chinese.
 
 ## System Requirements
 
@@ -115,3 +116,9 @@ Once the services are up, the terminal will display the local execution info for
 
 - **RAG Text Ingestion**: To import new base security documents into the Qdrant knowledge base, execute the document processing script via `ingest_security_docs.py`.
 - **Automated Log Translation/Processing**: `translate_logs.py` provides a template for batch processing logs or performing cross-language conversion tests.
+
+
+## 📄 License
+
+This project is licensed under the **MIT License**. 
+See the [LICENSE.md](LICENSE.md) and [LICENSE_ZH.md](LICENSE_ZH.md) files for details. 

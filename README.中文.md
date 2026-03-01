@@ -33,7 +33,8 @@
 3. **資安專家**: 透過專為網宇安全領域微調的 **Foundation-Sec-8B**，進行深度的系統與資安日誌分析。
 4. **硬體加速**: 整合 macOS Metal (MPS) 與 `llama-cpp-python`，最大化 Apple Silicon 上的推論效能。
 5. **向量檢索 (RAG)**: 使用 **Qdrant** (透過 Docker 部署) 儲存並檢索資安 SOP 文件。系統現在支援啟動時**自動 RAG 同步**。
-6. **效能監控面板**: 透過 ASITOP 風格的 HUD (Streamlit) 進行硬體即時監控，並利用 InfluxDB v3 + Grafana 追蹤歷史資源消耗趨勢。
+6. **效能監控與懸浮控制**: 透過 ASITOP 風格的 HUD (Streamlit) 進行硬體即時監控，並利用 InfluxDB v3 + Grafana 追蹤歷史趨勢。整合「PerfMon」與「History」懸浮按鈕，方便隨時切換監控狀態。
+7. **優化使用體驗**: 位於畫面中央上方的**語系切換器**，支援國旗圖示，可快速切換英文與繁體中文。
 
 ## 系統需求
 
@@ -116,3 +117,8 @@
 
 - **RAG 文本匯入**: 若要將新的基礎資安文件匯入至 Qdrant 知識庫，透過 `ingest_security_docs.py` 執行文件處理腳本。
 - **日誌自動化翻譯 / 處理**: `translate_logs.py` 提供了一個範本，用於批次處理日誌或進行跨語系的轉換測試。
+
+## 📄 授權條款
+
+本專案採用 **MIT 授權條款**。 
+詳情請參閱 [LICENSE.md](LICENSE.md) 與 [LICENSE_ZH.md](LICENSE_ZH.md) 檔案。
