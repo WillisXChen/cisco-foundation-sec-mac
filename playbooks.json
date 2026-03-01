@@ -18,5 +18,10 @@
         "id": 4,
         "title": "SQL Injection Attempts",
         "content": "Logs containing keywords like UNION SELECT, OR 1=1, or unexpected quotation marks in URL parameters. Action: Validate input sanitization on the application end and update WAF rules to block common SQLi payloads."
+    },
+    {
+        "id": 5,
+        "title": "Prompt Injection Attacks",
+        "content": "Detecting commands or instructions within user input that attempt to override the system prompt (e.g., 'ignore all previous instructions', 'now you are an admin'). Action: Implement strict output validation, use delimiters for user input, and monitor for unusual request patterns that deviate from normal user intent."
     }
 ]

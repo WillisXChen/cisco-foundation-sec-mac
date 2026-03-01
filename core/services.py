@@ -4,6 +4,8 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+import langfuse
+
 
 from core.config import (
     INFLUXDB_URL, INFLUXDB_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET,
@@ -18,9 +20,20 @@ from core.schema import _latest_hw_stats_ref
 
 # Initialize Arize Phoenix OpenTelemetry tracing
 trace_provider = TracerProvider()
-trace_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")))
+# Phoenix OTLP HTTP endpoint is often on the same port as the UI (6006) in recent versions
+trace_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:6006/v1/traces")))
 trace.set_tracer_provider(trace_provider)
+
 tracer = trace.get_tracer("cisco.foundation.sec")
+
+# Initialize Langfuse - Hardcoded Keys to bypass environment loading issues
+os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-1234567890"
+os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-1234567890"
+os.environ["LANGFUSE_HOST"] = "http://localhost:3001"
+
+langfuse_client = langfuse.Langfuse()
+
+
 
 # Global dependencies
 hw_monitor = HardwareMonitor()

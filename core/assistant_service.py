@@ -29,10 +29,11 @@ class AssistantService:
 
         if is_security:
             context_str = await asyncio.to_thread(self.vector_db.query_context, user_input)
+            # Use direct instructions to bypass structural looping hallucinations
             enforced_input = (
-                f"{context_str}{user_input}\n\n"
-                f"[Action: Please analyze the above input and respond in English only. "
-                f"Base your answer on the Internal System Context if it is relevant.]"
+                f"BACKGROUND CONTEXT:\n{context_str}\n\n"
+                f"Analyze the following technical query based on the background if relevant: {user_input}\n\n"
+                f"RESPONSE (in English):"
             )
             chat_messages.append({"role": "user", "content": enforced_input})
         else:
@@ -44,7 +45,7 @@ class AssistantService:
 
         # 3. Stream Main Response
         temperature = 0.4 if is_security else 0.2
-        max_tokens = 600 if is_security else 2048
+        max_tokens = 350 if is_security else 1536
         
         logger.info(f"Generating response using {active_name}...")
         stream = active_llm.create_chat_completion(
@@ -52,8 +53,9 @@ class AssistantService:
             stream=True,
             temperature=temperature,
             top_p=0.9,
+            repeat_penalty=1.1,
             max_tokens=max_tokens,
-            stop=["<|eot_id|>", "<|end_of_text|>", "</s>", "[INST]", "User:", "[Foundation-Sec]:", "\n\n", "Your response:"]
+            stop=["<|eot_id|>", "<|end_of_text|>", "</s>", "[INST]", "User:", "Question:", "Context:", "Analysis Instruction:"]
         )
 
         assistant_response = ""
