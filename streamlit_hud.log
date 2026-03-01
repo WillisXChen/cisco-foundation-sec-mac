@@ -6,34 +6,5 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to fals
 
   Local URL: http://localhost:8501
   Network URL: http://10.0.0.35:8501
-  External URL: http://1.169.60.150:8501
+  External URL: http://1.169.32.163:8501
 
-  For better performance, install the Watchdog module:
-
-  $ xcode-select --install
-  $ pip install watchdog
-            
-  Stopping...
-  Stopping...
-Exception ignored in: <module 'threading' from '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py'>
-Traceback (most recent call last):
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1553, in _shutdown
-    atexit_call()
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/thread.py", line 31, in _python_exit
-    t.join()
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1112, in join
-    self._wait_for_tstate_lock()
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1132, in _wait_for_tstate_lock
-    if lock.acquire(block, timeout):
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/chenwillis/Documents/Cases/cisco-foundation-sec-8b-macos/ai_env/lib/python3.11/site-packages/streamlit/web/bootstrap.py", line 43, in signal_handler
-    server.stop()
-  File "/Users/chenwillis/Documents/Cases/cisco-foundation-sec-8b-macos/ai_env/lib/python3.11/site-packages/streamlit/web/server/server.py", line 535, in stop
-    self._runtime.stop()
-  File "/Users/chenwillis/Documents/Cases/cisco-foundation-sec-8b-macos/ai_env/lib/python3.11/site-packages/streamlit/runtime/runtime.py", line 355, in stop
-    async_objs.eventloop.call_soon_threadsafe(stop_on_eventloop)
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 806, in call_soon_threadsafe
-    self._check_closed()
-  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 519, in _check_closed
-    raise RuntimeError('Event loop is closed')
-RuntimeError: Event loop is closed

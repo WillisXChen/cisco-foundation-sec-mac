@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
                                 pointer-events: auto;
                             ">
-                                <span style="font-size: 18px; line-height: 1;">${lang === 'zh-TW' ? '🇹🇼' : '🇺🇸'}</span>
+                                <span style="font-size: 18px; line-height: 1;">${lang === 'zh-TW' ? '🇹🇼' : (lang === 'ja' ? '🇯🇵' : '🇺🇸')}</span>
                                 <select id="lang-select" style="
                                     background: transparent;
                                     color: #cbd5e1;
@@ -150,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ">
                                     <option value="en-US" ${lang === 'en-US' ? 'selected' : ''} style="background: #1e293b; color: #fff;">English (US)</option>
                                     <option value="zh-TW" ${lang === 'zh-TW' ? 'selected' : ''} style="background: #1e293b; color: #fff;">繁體中文 (TW)</option>
+                                    <option value="ja" ${lang === 'ja' ? 'selected' : ''} style="background: #1e293b; color: #fff;">日本語 (JP)</option>
                                 </select>
                                 <div style="position: absolute; right: 12px; pointer-events: none; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #94a3b8;"></div>
                             </div>

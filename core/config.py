@@ -33,7 +33,7 @@ SEC_SYSTEM_MESSAGE = (
 )
 
 GENERAL_SYSTEM_MESSAGE = (
-    "You are a helpful AI assistant. Answer the user's questions politely and naturally in Traditional Chinese."
+    "You are a helpful AI assistant. Answer the user's questions politely and naturally in the requested language."
 )
 
 TRANSLATION_SYSTEM_MESSAGE = (
