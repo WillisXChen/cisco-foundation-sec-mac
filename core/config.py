@@ -13,6 +13,16 @@ PLAYBOOKS_PATH = os.path.join(BASE_DIR, "playbooks.json")
 MODEL_SEC_PATH = os.getenv("MODEL_SEC_PATH", os.path.join(MODELS_DIR, "foundation-sec-8b-q4_k_m.gguf"))
 MODEL_LLAMA3_PATH = os.getenv("MODEL_LLAMA3_PATH", os.path.join(MODELS_DIR, "llama-3-taiwan-8b-instruct-q4_k_m.gguf"))
 
+# GPU Layer Configuration (For model loading optimization)
+# Default to -1 for Metal (full offload) unless overridden
+N_GPU_LAYERS_LLAMA3 = int(os.getenv("N_GPU_LAYERS_LLAMA3", "-1"))
+N_GPU_LAYERS_SEC = int(os.getenv("N_GPU_LAYERS_SEC", "-1"))
+
+# Context Size (KV Cache) - Higher values use more RAM
+# 2048 is recommended to keep RAM usage under 12GB for two 8B models
+N_CTX_LLAMA3 = int(os.getenv("N_CTX_LLAMA3", "2048"))
+N_CTX_SEC = int(os.getenv("N_CTX_SEC", "2048"))
+
 # Database Configuration
 INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8181")
 INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", "apiv3_cisco-super-secret-auth-token")

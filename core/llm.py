@@ -4,7 +4,11 @@ from core.config import (
     SEC_SYSTEM_MESSAGE, 
     GENERAL_SYSTEM_MESSAGE, 
     INTENT_ROUTER_MESSAGE, 
-    CRITICAL_IT_KEYWORDS
+    CRITICAL_IT_KEYWORDS,
+    N_GPU_LAYERS_LLAMA3,
+    N_GPU_LAYERS_SEC,
+    N_CTX_LLAMA3,
+    N_CTX_SEC
 )
 from core.logger import logger
 
@@ -14,32 +18,36 @@ class LLMManager:
         self.llm_general = None
         self.llm_sec = None
 
-    def _load_model(self, path: str, context_size: int = 4096) -> Llama:
+    def _load_model(self, path: str, n_gpu_layers: int = -1, context_size: int = 2048) -> Llama:
         if not os.path.exists(path):
             logger.error(f"Model file not found at {path}")
             raise FileNotFoundError(f"Model file not found at {path}")
         
-        logger.info(f"Loading model from {path}...")
+        # Use roughly half of the available CPU threads for balanced resource usage
+        n_threads = max(1, os.cpu_count() // 2) if os.cpu_count() else 4
+        
+        logger.info(f"Loading model from {path} (layers={n_gpu_layers}, ctx={context_size}, threads={n_threads})...")
         return Llama(
             model_path=path,
-            n_gpu_layers=-1,
+            n_gpu_layers=n_gpu_layers,
             seed=1337,            
-            n_ctx=context_size,   
+            n_ctx=context_size,
+            n_threads=n_threads,
             verbose=False,        
             chat_format="llama-3" 
         )
 
-    def load_general_model(self, path: str, context_size: int = 4096):
+    def load_general_model(self, path: str):
         if self.llm_general is not None:
             logger.info("General model already loaded, skipping.")
             return
-        self.llm_general = self._load_model(path, context_size)
+        self.llm_general = self._load_model(path, N_GPU_LAYERS_LLAMA3, N_CTX_LLAMA3)
 
-    def load_security_model(self, path: str, context_size: int = 4096):
+    def load_security_model(self, path: str):
         if self.llm_sec is not None:
             logger.info("Security model already loaded, skipping.")
             return
-        self.llm_sec = self._load_model(path, context_size)
+        self.llm_sec = self._load_model(path, N_GPU_LAYERS_SEC, N_CTX_SEC)
 
     def classify_intent(self, user_input: str) -> bool:
         """Returns True if intent is security/IT related, False otherwise."""
