@@ -165,6 +165,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!document.getElementById("hud-toggle-btn")) {
             createToggleButton();
         }
+        // Force hide the original 'view_hw_history' button in the chat if it appears
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent.trim() === 'view_hw_history') {
+                btn.style.setProperty('display', 'none', 'important');
+            }
+        });
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
