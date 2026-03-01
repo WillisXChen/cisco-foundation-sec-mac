@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-bottom: 5px; color: #b8e8f8; font-weight: bold; background: transparent; padding: 5px 10px;">
                     🚀 ASITOP HUD
                 </div>
-                <iframe src='http://localhost:8501/?embed=true' width='100%' height='510' frameborder='0' style='border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.4); background: #0d1117;'></iframe>
+                <iframe src='http://localhost:8501/?embed=true' width='100%' height='540' frameborder='0' style='border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.4); background: #0d1117;'></iframe>
             `;
             document.body.appendChild(panel);
         }
