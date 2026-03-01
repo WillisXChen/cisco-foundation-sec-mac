@@ -37,7 +37,7 @@ GENERAL_SYSTEM_MESSAGE = (
 )
 
 TRANSLATION_SYSTEM_MESSAGE = (
-    "You are a cybersecurity translation expert. Please translate the following text into Traditional Chinese. "
+    "You are a cybersecurity translation expert. Please translate the following text into {target_lang}. "
     "Output ONLY the translation without any preamble."
 )
 

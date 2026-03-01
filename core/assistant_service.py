@@ -14,7 +14,7 @@ class AssistantService:
         self.vector_db = vector_db
 
     @observe(as_type="generation")
-    async def generate_response(self, user_input: str, chat_history: list) -> typing.AsyncGenerator[dict, None]:
+    async def generate_response(self, user_input: str, chat_history: list, target_lang: str = "Traditional Chinese") -> typing.AsyncGenerator[dict, None]:
         """Classifies intent, fetches context, and streams main response."""
         
         # 1. Classify Intent
@@ -36,7 +36,11 @@ class AssistantService:
             )
             chat_messages.append({"role": "user", "content": enforced_input})
         else:
-            chat_messages.append({"role": "user", "content": user_input})
+            if target_lang != "Traditional Chinese":
+                enforced_input = f"{user_input}\n\n[Action: Please respond in {target_lang} only.]"
+                chat_messages.append({"role": "user", "content": enforced_input})
+            else:
+                chat_messages.append({"role": "user", "content": user_input})
 
         # 3. Stream Main Response
         temperature = 0.4 if is_security else 0.2
@@ -85,14 +89,14 @@ class AssistantService:
         # TODO: manual trace update logic needs mapping to the new API if possible, for now simplify by letting the decorator handle it
 
     @observe(as_type="generation")
-    async def translate_response(self, text: str) -> typing.AsyncGenerator[dict, None]:
-        """Translates English response to Traditional Chinese using the general model."""
+    async def translate_response(self, text: str, target_lang: str) -> typing.AsyncGenerator[dict, None]:
+        """Translates English response to target layout using the general model."""
         if not self.llm.llm_general:
             return
 
-        logger.info("Translating response to Chinese...")
+        logger.info(f"Translating response to {target_lang}...")
         trans_messages = [
-            {"role": "system", "content": TRANSLATION_SYSTEM_MESSAGE},
+            {"role": "system", "content": TRANSLATION_SYSTEM_MESSAGE.format(target_lang=target_lang)},
             {"role": "user", "content": f"Text to translate:\n{text}"},
         ]
 
