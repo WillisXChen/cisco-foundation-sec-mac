@@ -13,3 +13,4 @@ structlog
 langfuse
 opentelemetry-sdk
 opentelemetry-exporter-otlp
+gql[websockets]

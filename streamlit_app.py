@@ -1,6 +1,7 @@
 import streamlit as st
-import requests
-import time
+import asyncio
+from gql import Client, gql
+from gql.transport.websockets import WebsocketsTransport
 
 st.set_page_config(layout="wide", page_title="ASITOP Monitor")
 
@@ -51,36 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 這裡是 Chainlit 裡我們剛才建好的 Strawberry GraphQL 伺服器網址
-GRAPHQL_URL = "http://localhost:8000/graphql"
-
-def get_stats():
-    """透過 GraphQL 向 Chainlit 拉取最新的硬體即時數據"""
-    query = """
-    query {
-      currentStats {
-        eCpuPct
-        pCpuPct
-        gpuPct
-        ramPct
-        ramUsedGb
-        ramTotalGb
-        eCores
-        pCores
-        gpuCores
-        cpuPowerW
-        gpuPowerW
-        totalPowerW
-        chipLabel
-      }
-    }
-    """
-    try:
-        response = requests.post(GRAPHQL_URL, json={'query': query}, timeout=2)
-        if response.status_code == 200:
-            return response.json()['data']['currentStats']
-    except Exception as e:
-        return None
-    return None
+GRAPHQL_WS_URL = "ws://localhost:8000/graphql"
 
 def draw_blocks(pct, max_blocks=60):
     """將百分比轉換成如 |||█████||| 樣式的純粹 ASCII 綠色方塊"""
@@ -93,47 +65,76 @@ def draw_blocks(pct, max_blocks=60):
 # 畫面佔位符，這樣能做到畫面原地刷新而不會一直往下長
 placeholder = st.empty()
 
-while True:
-    stats = get_stats()
-    
+def render_stats(stats):
     with placeholder.container():
-        if stats:
-            # 第一區塊：CPU info
-            st.markdown(f"**{stats['chipLabel']}<br>CPU Cores: {stats['eCores']}E+{stats['pCores']}P<br>GPU Cores: {stats['gpuCores']}**", unsafe_allow_html=True)
+        # 第一區塊：CPU info
+        st.markdown(f"**{stats['chipLabel']}<br>CPU Cores: {stats['eCores']}E+{stats['pCores']}P<br>GPU Cores: {stats['gpuCores']}**", unsafe_allow_html=True)
+        
+        # 使用兩欄佈局並排 E-CPU 與 P-CPU
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f'<div class="terminal-box">E-CPU Usage: {stats["eCpuPct"]:.1f}%<br>{draw_blocks(stats["eCpuPct"], 40)}</div>', unsafe_allow_html=True)
+        with col2:
+            st.markdown(f'<div class="terminal-box">P-CPU Usage: {stats["pCpuPct"]:.1f}%<br>{draw_blocks(stats["pCpuPct"], 40)}</div>', unsafe_allow_html=True)
             
-            # 使用兩欄佈局並排 E-CPU 與 P-CPU
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f'<div class="terminal-box">E-CPU Usage: {stats["eCpuPct"]:.1f}%<br>{draw_blocks(stats["eCpuPct"], 40)}</div>', unsafe_allow_html=True)
-            with col2:
-                st.markdown(f'<div class="terminal-box">P-CPU Usage: {stats["pCpuPct"]:.1f}%<br>{draw_blocks(stats["pCpuPct"], 40)}</div>', unsafe_allow_html=True)
-                
-            # 第二區塊：功耗 (Power)
-            col3, col4 = st.columns(2)
-            with col3:
-                cpu_p = f"{stats['cpuPowerW']}W" if stats['cpuPowerW']>=0 else 'N/A'
-                cpu_val = max(stats['cpuPowerW'], 0)
-                cpu_pct = min((cpu_val / 40.0) * 100, 100)
-                st.markdown(f'<div class="terminal-box">CPU Power: {cpu_p}<br>{draw_blocks(cpu_pct, 40)}</div>', unsafe_allow_html=True)
-            with col4:
-                gpu_p = f"{stats['gpuPowerW']}W" if stats['gpuPowerW']>=0 else 'N/A'
-                gpu_val = max(stats['gpuPowerW'], 0)
-                gpu_pct = min((gpu_val / 40.0) * 100, 100)
-                st.markdown(f'<div class="terminal-box">GPU Power: {gpu_p}<br>{draw_blocks(gpu_pct, 40)}</div>', unsafe_allow_html=True)
+        # 第二區塊：功耗 (Power)
+        col3, col4 = st.columns(2)
+        with col3:
+            cpu_p = f"{stats['cpuPowerW']}W" if stats['cpuPowerW']>=0 else 'N/A'
+            cpu_val = max(stats['cpuPowerW'], 0)
+            cpu_pct = min((cpu_val / 40.0) * 100, 100)
+            st.markdown(f'<div class="terminal-box">CPU Power: {cpu_p}<br>{draw_blocks(cpu_pct, 40)}</div>', unsafe_allow_html=True)
+        with col4:
+            gpu_p = f"{stats['gpuPowerW']}W" if stats['gpuPowerW']>=0 else 'N/A'
+            gpu_val = max(stats['gpuPowerW'], 0)
+            gpu_pct = min((gpu_val / 40.0) * 100, 100)
+            st.markdown(f'<div class="terminal-box">GPU Power: {gpu_p}<br>{draw_blocks(gpu_pct, 40)}</div>', unsafe_allow_html=True)
 
-            # 第三區塊：整行顯示 (GPU, Memory, Total Power)
-            st.markdown(f'<div class="terminal-box">GPU Usage: {stats["gpuPct"]}%<br>{draw_blocks(stats["gpuPct"], 80)}</div>', unsafe_allow_html=True)
-            
-            ram_actual_pct = (stats["ramUsedGb"] / stats["ramTotalGb"]) * 100 if stats["ramTotalGb"] > 0 else 0
-            st.markdown(f'<div class="terminal-box">Memory RAM Usage: {stats["ramUsedGb"]:.1f}/{stats["ramTotalGb"]:.1f}GB ({ram_actual_pct:.1f}%)<br>{draw_blocks(ram_actual_pct, 80)}</div>', unsafe_allow_html=True)
+        # 第三區塊：整行顯示 (GPU, Memory, Total Power)
+        st.markdown(f'<div class="terminal-box">GPU Usage: {stats["gpuPct"]}%<br>{draw_blocks(stats["gpuPct"], 80)}</div>', unsafe_allow_html=True)
+        
+        ram_actual_pct = (stats["ramUsedGb"] / stats["ramTotalGb"]) * 100 if stats["ramTotalGb"] > 0 else 0
+        st.markdown(f'<div class="terminal-box">Memory RAM Usage: {stats["ramUsedGb"]:.1f}/{stats["ramTotalGb"]:.1f}GB ({ram_actual_pct:.1f}%)<br>{draw_blocks(ram_actual_pct, 80)}</div>', unsafe_allow_html=True)
 
-            tot_p = f"{stats['totalPowerW']}W" if stats['totalPowerW']>=0 else 'N/A'
-            tot_val = max(stats['totalPowerW'], 0)
-            tot_pct = min((tot_val / 80.0) * 100, 100)
-            st.markdown(f'<div class="terminal-box">CPU+GPU+ANE Total Power: {tot_p}<br>{draw_blocks(tot_pct, 80)}</div>', unsafe_allow_html=True)
-            
-        else:
-            st.error("等待 Chainlit 伺服器的 GraphQL API 連線中 (請確保 Chainlit 在 localhost:8000 執行中)...")
-    
-    # 暫停一秒再刷新，類似頂端即時指令 (top)
-    time.sleep(1)
+        tot_p = f"{stats['totalPowerW']}W" if stats['totalPowerW']>=0 else 'N/A'
+        tot_val = max(stats['totalPowerW'], 0)
+        tot_pct = min((tot_val / 80.0) * 100, 100)
+        st.markdown(f'<div class="terminal-box">CPU+GPU+ANE Total Power: {tot_p}<br>{draw_blocks(tot_pct, 80)}</div>', unsafe_allow_html=True)
+
+async def run_subscription():
+    while True:
+        try:
+            transport = WebsocketsTransport(url=GRAPHQL_WS_URL)
+            async with Client(transport=transport, fetch_schema_from_transport=False) as session:
+                query = gql("""
+                subscription {
+                  watchStats {
+                    eCpuPct
+                    pCpuPct
+                    gpuPct
+                    ramPct
+                    ramUsedGb
+                    ramTotalGb
+                    eCores
+                    pCores
+                    gpuCores
+                    cpuPowerW
+                    gpuPowerW
+                    totalPowerW
+                    chipLabel
+                  }
+                }
+                """)
+                async for result in session.subscribe(query):
+                    stats = result.get('watchStats')
+                    if stats:
+                        render_stats(stats)
+        except Exception as e:
+            with placeholder.container():
+                st.error(f"等待 Chainlit 伺服器的 GraphQL 訂閱 API 連線中 (發生失敗: {e})...")
+            await asyncio.sleep(2)
+
+try:
+    asyncio.run(run_subscription())
+except Exception as e:
+    st.error(f"Subscription loop exited: {e}")
