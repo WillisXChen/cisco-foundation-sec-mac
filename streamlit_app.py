@@ -108,25 +108,24 @@ while True:
             with col2:
                 st.markdown(f'<div class="terminal-box">P-CPU Usage: {stats["pCpuPct"]:.1f}%<br>{draw_blocks(stats["pCpuPct"], 40)}</div>', unsafe_allow_html=True)
                 
-            # 第二區塊：GPU 與 記憶體
+            # 第二區塊：功耗 (Power)
             col3, col4 = st.columns(2)
             with col3:
-                st.markdown(f'<div class="terminal-box">GPU Usage: {stats["gpuPct"]}%<br>{draw_blocks(stats["gpuPct"], 40)}</div>', unsafe_allow_html=True)
-            with col4:
-                st.markdown(f'<div class="terminal-box">Memory RAM Usage: {stats["ramUsedGb"]:.1f}/{stats["ramTotalGb"]:.1f}GB<br>{draw_blocks(stats["ramPct"], 40)}</div>', unsafe_allow_html=True)
-                
-            # 第三區塊：功耗 (Power)
-            col5, col6 = st.columns(2)
-            with col5:
                 cpu_p = f"{stats['cpuPowerW']}W" if stats['cpuPowerW']>=0 else 'N/A'
                 cpu_val = max(stats['cpuPowerW'], 0)
                 cpu_pct = min((cpu_val / 40.0) * 100, 100)
                 st.markdown(f'<div class="terminal-box">CPU Power: {cpu_p}<br>{draw_blocks(cpu_pct, 40)}</div>', unsafe_allow_html=True)
-            with col6:
+            with col4:
                 gpu_p = f"{stats['gpuPowerW']}W" if stats['gpuPowerW']>=0 else 'N/A'
                 gpu_val = max(stats['gpuPowerW'], 0)
                 gpu_pct = min((gpu_val / 40.0) * 100, 100)
                 st.markdown(f'<div class="terminal-box">GPU Power: {gpu_p}<br>{draw_blocks(gpu_pct, 40)}</div>', unsafe_allow_html=True)
+
+            # 第三區塊：整行顯示 (GPU, Memory, Total Power)
+            st.markdown(f'<div class="terminal-box">GPU Usage: {stats["gpuPct"]}%<br>{draw_blocks(stats["gpuPct"], 80)}</div>', unsafe_allow_html=True)
+            
+            ram_actual_pct = (stats["ramUsedGb"] / stats["ramTotalGb"]) * 100 if stats["ramTotalGb"] > 0 else 0
+            st.markdown(f'<div class="terminal-box">Memory RAM Usage: {stats["ramUsedGb"]:.1f}/{stats["ramTotalGb"]:.1f}GB ({ram_actual_pct:.1f}%)<br>{draw_blocks(ram_actual_pct, 80)}</div>', unsafe_allow_html=True)
 
             tot_p = f"{stats['totalPowerW']}W" if stats['totalPowerW']>=0 else 'N/A'
             tot_val = max(stats['totalPowerW'], 0)

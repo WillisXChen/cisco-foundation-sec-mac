@@ -181,7 +181,19 @@ async def on_action_view_hw_history(action: cl.Action):
         for col, name in [('cpu_power_w', 'CPU W'), ('gpu_power_w', 'GPU W'), ('total_power_w', 'Total W')]:
             if col in df.columns: fig.add_trace(go.Scatter(x=df['_time'], y=df[col], name=name), row=2, col=1)
 
-        fig.update_layout(height=600, template="plotly_dark", title_text="最近 15 分鐘趨勢")
+        fig.update_layout(
+            height=650, 
+            template="plotly_dark", 
+            title_text="最近 15 分鐘趨勢",
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.15,
+                xanchor="center",
+                x=0.5
+            ),
+            margin=dict(b=80)
+        )
         await cl.Message(content="✅ **歷史圖表已生成**", elements=[cl.Plotly("歷史監控", figure=fig, display="inline")], author="H/W Monitor").send()
     except Exception as e:
         logger.error(f"Plot error: {e}")
