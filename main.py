@@ -139,12 +139,8 @@ async def main(message: cl.Message):
 
     # Decision logic: Only translate if security response is NOT in the user's target language
     needs_translation = False
-    if is_sec:
-        if target_lang_name == "Traditional Chinese" and not contains_chinese(assistant_full_text):
-            needs_translation = True
-        elif target_lang_name == "Japanese" and not any('\u3040' <= char <= '\u30ff' for char in assistant_full_text):
-            # Future proof: Support Japanese if needed
-            needs_translation = True
+    if is_sec and target_lang_name != "English":
+        needs_translation = True
 
     if needs_translation:
         trans_msg = cl.Message(content=_t("\n\n> 🔄 *Translating...*\n\n", lang=lang), author="Translator")

@@ -38,6 +38,11 @@ LANG_NAMES = {
     "zh-TW": "Traditional Chinese",
     "en": "English",
     "ja": "Japanese",
+    "es": "Spanish",
+    "ko": "Korean",
+    "th": "Thai",
+    "vi": "Vietnamese",
+    "hi": "Hindi",
 }
 
 def get_lang_name(lang: str = "zh-TW") -> str:
