@@ -3,10 +3,13 @@
 enable_telemetry = false
 
 [features]
-# Allow users to upload image/file (multi-modal mode)
-multi_modal = true
-# Frontend does not allow user to manually switch models
 unsafe_allow_html = true
+
+[features.spontaneous_file_upload]
+enabled = true
+accept = ["image/jpeg", "image/png", "text/plain", "application/pdf"]
+max_files = 3
+max_size_mb = 10
 
 [UI]
 # Application name (displayed in tab title and UI header)
