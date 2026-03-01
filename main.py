@@ -71,19 +71,13 @@ async def hardware_monitor_task():
 # --- Chainlit Callbacks ---
 @cl.on_chat_start
 async def on_chat_start():
-    hud_content = (
-        f"### 🚀 ASITOP HUD `{hw_monitor.chip_label}`\n"
-        f"<iframe src='http://localhost:8501/?embed=true' width='100%' height='320' frameborder='0' "
-        f"style='border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.4); background: #0d1117;'></iframe>\n"
-    )
     actions = [cl.Action(name="view_hw_history", payload={"action": "show"}, description="查看歷史資源趨勢")]
-    await cl.Message(content=hud_content, author="H/W Monitor", actions=actions).send()
     
     global _monitor_task
     if _monitor_task is None:
         _monitor_task = asyncio.create_task(hardware_monitor_task())
 
-    loading_msg = cl.Message(content="### ⚙️ 系統初始化中...")
+    loading_msg = cl.Message(content="### ⚙️ 系統初始化中...", actions=actions)
     await loading_msg.send()
 
     try:
