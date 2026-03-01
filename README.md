@@ -12,7 +12,7 @@
 
 ---
 
-This project is a bilingual (Chinese/English) security analysis smart assistant running on macOS (Apple Silicon M-series chips). By integrating [Chainlit](https://docs.chainlit.io/) to provide a modern interactive interface, and combining multiple Large Language Models (LLMs) with the Qdrant vector database, it achieves professional security log analysis and RAG (Retrieval-Augmented Generation) applications.
+This project is a multilingual (English/Chinese/Japanese) security analysis smart assistant running on macOS (Apple Silicon M-series chips). By integrating [Chainlit](https://docs.chainlit.io/) to provide a modern interactive interface, and combining multiple Large Language Models (LLMs) with the Qdrant vector database, it achieves professional security log analysis and RAG (Retrieval-Augmented Generation) applications.
 
 ## Built With
 
@@ -39,12 +39,13 @@ This project is a bilingual (Chinese/English) security analysis smart assistant 
 ## Core Project Components
 
 1. **Frontend Interface**: Uses Chainlit (`main.py`) to build a conversational AI interface, supporting real-time text streaming and chat history.
-2. **Multi-language Support**: Handles intent classification, multi-language understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Supports 20+ interface languages via Chainlit localization.
+2. **Multilingual Support**: Handles intent classification, multilingual understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Optimized for **English**, **Traditional Chinese**, and **Japanese**.
 3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain.
-4. **Hardware Acceleration**: Integrates macOS Metal (MPS) with `llama-cpp-python` to maximize inference performance on Apple Silicon.
-5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system now features **automatic RAG synchronization** on startup.
-6. **Performance Dashboard & Floating Controls**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) and historical data tracking (InfluxDB v3 + Grafana). Includes floating "PerfMon" and "History" buttons for instant access.
-7. **Enhanced Accessibility**: Persistent **top-center language selector** with flag icons for seamless switching between English and Traditional Chinese.
+4. **Hardware Acceleration & Fine-tuning**: Integrates macOS Metal (MPS) with `llama-cpp-python`. Supports manual **GPU layer offloading** and **Context Window (KV Cache) adjustment** via `.env` to balance VRAM usage on Mac Pro/Studio (M2/M3).
+5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system features **automatic RAG synchronization** on startup.
+6. **Observability & Tracing**: Integrated with **Langfuse** and **Arize Phoenix** for deep trace auditing, AI response quality monitoring, and system-wide **Structlog** logging.
+7. **Performance Dashboard & Floating HUD**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) utilizing **GraphQL subscriptions**. Includes floating "PerfMon" and "History" panels.
+8. **Refined UI/UX**: Persistent top-center language selector with flag icons for quick switching between EN, ZH, and JA.
 
 ## System Requirements
 
@@ -116,6 +117,23 @@ If you have already successfully executed `run.sh` and downloaded all environmen
 ### Start Chatting
 
 Once the services are up, the terminal will display the local execution info for Chainlit. Typically, you can access the security assistant interface by opening your browser and navigating to `http://localhost:8000`.
+
+## ⚙️ Performance Optimization (Advanced)
+
+To ensure the system stays within resource limits (e.g., < 50% RAM on a 24GB Mac), you can fine-tune the following in your `.env`:
+
+*   `N_GPU_LAYERS_LLAMA3`: GPU layers for the general model (-1 for all, 0 for CPU).
+*   `N_GPU_LAYERS_SEC`: GPU layers for the security model.
+*   `N_CTX_LLAMA3` / `N_CTX_SEC`: Context size (default 2048). Reducing this saves significant RAM.
+
+## 📊 Observability & Monitoring
+
+The system is equipped with enterprise-grade observability tools:
+
+- **Langfuse**: Trace your LLM calls, costs, and token usage.
+- **Arize Phoenix**: Automatic evaluation of RAG responses and tracing.
+- **ASITOP HUD**: Floating real-time HUD for GPU/CPU/RAM monitoring.
+- **Grafana**: Historical performance dashboards.
 ## Troubleshooting
 
 - **Qdrant fails to start**: Ensure Docker Desktop or Podman is currently running.

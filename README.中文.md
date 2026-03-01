@@ -12,7 +12,7 @@
 
 ---
 
-本專案是一個運行在 macOS (Apple Silicon M 系列晶片) 上的雙語 (中文/英文) 資安分析智慧助理。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，實現了專業的資安日誌分析與 RAG (檢索增強生成) 應用。
+本專案是一個運行在 macOS (Apple Silicon M 系列晶片) 上的多語系 (中文/英文/日文) 資安分析智慧助理。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，實現了專業的資安日誌分析與 RAG (檢索增強生成) 應用。
 
 ## 開發工具與技術堆疊
 
@@ -39,12 +39,13 @@
 ## 核心專案元件
 
 1. **前端介面**: 使用 Chainlit (`main.py`) 構建對話式 AI 介面，支援即時文字串流與歷史對話。
-2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯，透過 Chainlit 地板語系支援 20+ 種語言。
+2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯，針對**中文、英文、日文**進行了特別優化。
 3. **資安專家**: 透過專為網宇安全領域微調的 **Foundation-Sec-8B**，進行深度的系統與資安日誌分析。
-4. **硬體加速**: 整合 macOS Metal (MPS) 與 `llama-cpp-python`，最大化 Apple Silicon 上的推論效能。
+4. **硬體加速與微調**: 整合 macOS Metal (MPS) 與 `llama-cpp-python`。支援透過 `.env` 手動調校 **GPU 層級卸載 (GPU Layers)** 與 **上下文視窗 (KV Cache)** 大小，以在大容量統一記憶體 (M2/M3) 上平衡效能與資源占用。
 5. **向量檢索 (RAG)**: 使用 **Qdrant** (透過 Docker 部署) 儲存並檢索資安 SOP 文件。系統現在支援啟動時**自動 RAG 同步**。
-6. **效能監控與懸浮控制**: 透過 ASITOP 風格的 HUD (Streamlit) 進行硬體即時監控，並利用 InfluxDB v3 + Grafana 追蹤歷史趨勢。整合「PerfMon」與「History」懸浮按鈕，方便隨時切換監控狀態。
-7. **優化使用體驗**: 位於畫面中央上方的**語系切換器**，支援國旗圖示，可快速切換英文與繁體中文。
+6. **可觀測性與追蹤 (Observability)**: 整合 **Langfuse** 與 **Arize Phoenix**，提供深入的對話軌跡審計、AI 反應質量監控以及全系統的 **Structlog** 結構化日誌。
+7. **效能監控與懸浮控制**: 透過 ASITOP 風格的 HUD (Streamlit) 使用 **GraphQL 訂閱** 進行硬體即時監控，並利用 InfluxDB v3 + Grafana 追蹤歷史趨勢。整合「PerfMon」與「History」懸浮按鈕。
+8. **優化使用體驗**: 位於畫面中央上方的**語系切換器**，支援國旗圖示，可快速在 EN、ZH 與 JA 之間切換。
 
 ## 系統需求
 
@@ -116,6 +117,23 @@
 ### 開始對話
 
 當服務都啟動完畢後，終端機將會顯示 Chainlit 的本地執行資訊。通常您可以開啟瀏覽器並前往 `http://localhost:8000` 來存取資安助理介面。
+
+## ⚙️ 效能優化 (進階設定)
+
+為了確保系統資源占用（例如在 24GB 的 Mac 上不超過 50% RAM），您可以在 `.env` 中調校以下參數：
+
+*   `N_GPU_LAYERS_LLAMA3`: 通用模型的 GPU 卸載層數 (-1 為全卸載，0 為僅 CPU)。
+*   `N_GPU_LAYERS_SEC`: 資安模型的 GPU 卸載層數。
+*   `N_CTX_LLAMA3` / `N_CTX_SEC`: 上下文視窗大小 (預設 2048)。縮小此值可顯著節省記憶體。
+
+## 📊 可觀測性與監控 (Observability)
+
+本系統配備了企業級的可觀測性工具：
+
+- **Langfuse**: 追蹤您的 LLM 調用、成本與 Token 使用狀況。
+- **Arize Phoenix**: 自動評估 RAG 反應質量與追蹤 (Evaluation)。
+- **ASITOP HUD**: 懸浮即時顯示硬體 (GPU/CPU/RAM) 使用狀態。
+- **Grafana**: 提供系統效能的歷史趨勢看板。
 
 ## 疑難排解
 
