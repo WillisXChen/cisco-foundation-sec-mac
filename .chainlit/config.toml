@@ -19,7 +19,7 @@ name = "Cisco Foundation Sec 8B with Taiwan LLM "
 default_theme = "dark"
 
 # Default language
-default_language = "zh-TW"
+default_language = "en"
 
 # Whether to show README as the welcome page in the sidebar
 show_readme_as_default = true

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("hud-is-hidden");
 
     const urlParams = new URLSearchParams(window.location.search);
-    const lang = urlParams.get('lang') || 'zh-TW';
+    const lang = urlParams.get('lang') || 'en-US';
 
     fetch(`/api/translations?lang=${lang}`)
         .then(response => response.json())
@@ -116,6 +116,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 document.body.appendChild(historyBtn);
 
+                // --- Create Language Selector (Top Center) ---
+                if (!document.getElementById("lang-selector-container")) {
+                    const langBtn = document.createElement("div");
+                    langBtn.id = "lang-selector-container";
+                    langBtn.innerHTML = `
+                        <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                            <div id="lang-select-wrapper" style="
+                                background: rgba(15, 23, 42, 0.85);
+                                backdrop-filter: blur(12px);
+                                border: 1px solid rgba(255, 255, 255, 0.15);
+                                border-radius: 12px;
+                                padding: 6px 12px;
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+                                pointer-events: auto;
+                            ">
+                                <span style="font-size: 18px; line-height: 1;">${lang === 'zh-TW' ? '🇹🇼' : '🇺🇸'}</span>
+                                <select id="lang-select" style="
+                                    background: transparent;
+                                    color: #cbd5e1;
+                                    border: none;
+                                    font-family: 'JetBrains Mono', monospace;
+                                    font-weight: 600;
+                                    font-size: 13px;
+                                    cursor: pointer;
+                                    outline: none;
+                                    appearance: none;
+                                    -webkit-appearance: none;
+                                    padding-right: 20px;
+                                ">
+                                    <option value="en-US" ${lang === 'en-US' ? 'selected' : ''} style="background: #1e293b; color: #fff;">English (US)</option>
+                                    <option value="zh-TW" ${lang === 'zh-TW' ? 'selected' : ''} style="background: #1e293b; color: #fff;">繁體中文 (TW)</option>
+                                </select>
+                                <div style="position: absolute; right: 12px; pointer-events: none; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #94a3b8;"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    Object.assign(langBtn.style, {
+                        position: "fixed",
+                        top: "15px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        zIndex: "11000",
+                        pointerEvents: "none", // Container is transparent, only inner wrapper is clickable
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                    });
+
+                    document.body.appendChild(langBtn);
+
+                    const select = document.getElementById("lang-select");
+                    const wrapper = document.getElementById("lang-select-wrapper");
+
+                    select.onchange = (e) => {
+                        window.location.href = `/?lang=${e.target.value}`;
+                    };
+
+                    wrapper.onmouseover = () => {
+                        wrapper.style.borderColor = "rgba(0, 255, 255, 0.4)";
+                        wrapper.style.boxShadow = "0 0 15px rgba(0, 255, 255, 0.15)";
+                        langBtn.style.top = "17px";
+                    };
+                    wrapper.onmouseout = () => {
+                        wrapper.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                        wrapper.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.4)";
+                        langBtn.style.top = "15px";
+                    };
+                }
+
                 // --- Create Fixed HUD Panel ---
                 if (!document.getElementById("asitop-hud-container")) {
                     // Inject styles dynamically to bypass Chainlit static CSS caching
@@ -172,11 +243,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     const toggleBtn = document.getElementById("hud-toggle-btn");
                     const histBtn = document.getElementById("history-btn");
+                    const langContainer = document.getElementById("lang-selector-container");
+
                     if (toggleBtn && histBtn) {
                         const toggleRect = toggleBtn.getBoundingClientRect();
                         histBtn.style.right = (window.innerWidth - toggleRect.left + 15) + "px";
                     }
-                }, 100);
+                }, 200);
             };
 
             // Chainlit heavily uses React, use MutationObserver to persist the button
@@ -191,6 +264,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Keep keeping right margin updated if window resizes subtly
                 const toggleBtn = document.getElementById("hud-toggle-btn");
                 const histBtn = document.getElementById("history-btn");
+                const langContainer = document.getElementById("lang-selector-container");
+
                 if (toggleBtn && histBtn) {
                     const toggleRect = toggleBtn.getBoundingClientRect();
                     histBtn.style.right = (window.innerWidth - toggleRect.left + 15) + "px";

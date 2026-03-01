@@ -25,7 +25,7 @@ os.makedirs(".files", exist_ok=True)
 async def on_chat_start():
     # Attempt to extract 'lang' from URL parameters
     referer = cl.context.session.environ.get("HTTP_REFERER")
-    lang_param = cl.user_session.get("language") or "zh-TW"
+    lang_param = cl.user_session.get("language") or "en"
     if referer:
         try:
             from urllib.parse import urlparse, parse_qs
@@ -86,7 +86,7 @@ async def on_chat_start():
 async def main(message: cl.Message):
     chat_history = cl.user_session.get("chat_history", [])
     user_input = message.content.strip()
-    lang = cl.user_session.get("lang", "zh-TW")
+    lang = cl.user_session.get("lang", "en")
     target_lang_name = get_lang_name(lang)
 
     # Main Response Generation
@@ -144,7 +144,7 @@ async def main(message: cl.Message):
 
 @cl.action_callback("view_hw_history")
 async def on_action_view_hw_history(action: cl.Action):
-    lang = cl.user_session.get("lang", "zh-TW")
+    lang = cl.user_session.get("lang", "en")
 
     msg = _t("📊 Fetching historical data from InfluxDB...", lang=lang)
     await cl.Message(content=msg, author="System").send()
