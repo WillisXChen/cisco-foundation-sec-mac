@@ -1,6 +1,16 @@
-# Cisco Foundation-Sec 8B Native on Apple Mac Silicon (雙語資安助理)
+<div align="center">
+  <img src="public/logo_dark.png" width="100" alt="Native AI Security Assistant Logo">
 
-[![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-blue?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-gray?style=for-the-badge)](README.ja.md)
+  # 🛡️ Native AI Security Assistant for Apple Silicon
+  
+  *Cisco Foundation-Sec 8B • 雙語日誌分析 • RAG 強化手冊 • Metal 加速*
+
+  [![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-blue?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-gray?style=for-the-badge)](README.ja.md)
+
+  **維護者 (Maintainer):** [Willis Chen](mailto:misweyu2007@gmail.com)
+</div>
+
+---
 
 本專案是一個運行在 macOS (Apple Silicon M 系列晶片) 上的雙語 (中文/英文) 資安分析智慧助理。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，實現了專業的資安日誌分析與 RAG (檢索增強生成) 應用。
 

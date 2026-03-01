@@ -1,6 +1,16 @@
-# Cisco Foundation-Sec 8B Native on Apple Mac Silicon (バイリンガル・セキュリティ・アシスタント)
+<div align="center">
+  <img src="public/logo_dark.png" width="100" alt="Native AI Security Assistant Logo">
 
-[![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-gray?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-blue?style=for-the-badge)](README.ja.md)
+  # 🛡️ Native AI Security Assistant for Apple Silicon
+  
+  *Cisco Foundation-Sec 8B • バイリンガル分析 • RAG 拡張 • Metal 加速*
+
+  [![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-gray?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-blue?style=for-the-badge)](README.ja.md)
+
+  **メンテナー (Maintainer):** [Willis Chen](mailto:misweyu2007@gmail.com)
+</div>
+
+---
 
 このプロジェクトは、macOS（Apple Silicon Mシリーズチップ）上で動作するバイリンガル（中国語/英語対応可能）のセキュリティ分析スマートアシスタントです。[Chainlit](https://docs.chainlit.io/)を統合して最新のインタラクティブなUIを提供し、複数の大規模言語モデル（LLMs）とQdrantベクトルデータベースを組み合わせることで、プロフェッショナルなセキュリティログ分析とRAG（検索拡張生成）アプリケーションを実現しています。
 
