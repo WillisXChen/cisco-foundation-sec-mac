@@ -3,7 +3,7 @@
 
   # 🛡️ Native AI Security Assistant for Apple Silicon
   
-  *Cisco Foundation-Sec 8B • Bilingual Log Analysis • RAG-Enabled Playbooks • Metal-Accelerated*
+  *Cisco Foundation-Sec 8B • Multilingual Log Analysis • RAG-Enabled Playbooks • Metal-Accelerated*
 
   [![English](https://img.shields.io/badge/English-blue?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-gray?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-gray?style=for-the-badge)](README.ja.md) [![Español](https://img.shields.io/badge/Espa%C3%B1ol-gray?style=for-the-badge)](README.es.md) [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-gray?style=for-the-badge)](README.ko.md) [![ไทย](https://img.shields.io/badge/%E0%B9%84%E0%B8%97%E0%B8%A2-gray?style=for-the-badge)](README.th.md) [![Tiếng Việt](https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-gray?style=for-the-badge)](README.vi.md) [![हिन्दी](https://img.shields.io/badge/%E0%A4%B9%E0%A4%BF%E0%A4%A3%E0%A5%8D%E0%A4%A6%E0%A5%80-gray?style=for-the-badge)](README.hi.md)
 
@@ -12,7 +12,11 @@
 
 ---
 
-This project is a multilingual (English/Chinese/Japanese) security analysis smart assistant running on macOS (Apple Silicon M-series chips). By integrating [Chainlit](https://docs.chainlit.io/) to provide a modern interactive interface, and combining multiple Large Language Models (LLMs) with the Qdrant vector database, it achieves professional security log analysis and RAG (Retrieval-Augmented Generation) applications.
+This project is a multilingual security analysis smart assistant running on macOS (Apple Silicon M-series chips), supporting multiple languages including English, Chinese, Japanese, Spanish, Korean, Thai, Vietnamese, and Hindi. By integrating [Chainlit](https://docs.chainlit.io/) to provide a modern interactive interface, and combining multiple Large Language Models (LLMs) with the Qdrant vector database, it achieves professional security log analysis and RAG (Retrieval-Augmented Generation) applications.
+
+<div align="center">
+  <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800">
+</div>
 
 ## Built With
 
@@ -39,13 +43,13 @@ This project is a multilingual (English/Chinese/Japanese) security analysis smar
 ## Core Project Components
 
 1. **Frontend Interface**: Uses Chainlit (`main.py`) to build a conversational AI interface, supporting real-time text streaming and chat history.
-2. **Multilingual Support**: Handles intent classification, multilingual understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Optimized for **English**, **Traditional Chinese**, and **Japanese**.
+2. **Multilingual Support**: Handles intent classification, multilingual understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Optimized for **English**, **Traditional Chinese**, **Japanese**, **Spanish**, **Korean**, **Thai**, **Vietnamese**, and **Hindi**.
 3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain.
 4. **Hardware Acceleration & Fine-tuning**: Integrates macOS Metal (MPS) with `llama-cpp-python`. Supports manual **GPU layer offloading** and **Context Window (KV Cache) adjustment** via `.env` to balance VRAM usage on Mac Pro/Studio (M2/M3).
 5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system features **automatic RAG synchronization** on startup.
 6. **Observability & Tracing**: Integrated with **Langfuse** and **Arize Phoenix** for deep trace auditing, AI response quality monitoring, and system-wide **Structlog** logging.
 7. **Performance Dashboard & Floating HUD**: Real-time hardware monitoring via ASITOP style HUD (Streamlit) utilizing **GraphQL subscriptions**. Includes floating "PerfMon" and "History" panels.
-8. **Refined UI/UX**: Persistent top-center language selector with flag icons for quick switching between EN, ZH, and JA.
+8. **Refined UI/UX**: Persistent top-center language selector with flag icons for quick switching between multiple supported languages.
 
 ## System Requirements
 

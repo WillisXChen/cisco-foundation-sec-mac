@@ -3,7 +3,7 @@
 
   # 🛡️ Native AI Security Assistant for Apple Silicon
   
-  *Cisco Foundation-Sec 8B • バイリンガル分析 • RAG 拡張 • Metal 加速*
+  *Cisco Foundation-Sec 8B • 多言語ログ分析 • RAG 拡張 • Metal 加速*
 
   [![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-gray?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-blue?style=for-the-badge)](README.ja.md) [![Español](https://img.shields.io/badge/Espa%C3%B1ol-gray?style=for-the-badge)](README.es.md) [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-gray?style=for-the-badge)](README.ko.md) [![ไทย](https://img.shields.io/badge/%E0%B9%84%E0%B8%97%E0%B8%A2-gray?style=for-the-badge)](README.th.md) [![Tiếng Việt](https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-gray?style=for-the-badge)](README.vi.md) [![हिन्दी](https://img.shields.io/badge/%E0%A4%B9%E0%A4%BF%E0%A4%A3%E0%A5%8D%E0%A4%A6%E0%A5%80-gray?style=for-the-badge)](README.hi.md)
 
@@ -12,7 +12,11 @@
 
 ---
 
-このプロジェクトは、macOS (Apple Silicon Mシリーズチップ) 上で動作する多言語 (英語/中国語/日本語) のセキュリティ分析スマートアシスタントです。[Chainlit](https://docs.chainlit.io/)を統合して最新のインタラクティブなUIを提供し、複数の大規模言語モデル (LLMs) とQdrantベクトルデータベースを組み合わせることで、プロフェッショナルなセキュリティログ分析とRAG (検索拡張生成) アプリケーションを実現しています。
+このプロジェクトは、macOS (Apple Silicon Mシリーズチップ) 上で動作する多言語セキュリティ分析スマートアシスタントです。英語、中国語、日本語、スペイン語、韓国語、タイ語、ベトナム語、ヒンディー語をサポートしています。[Chainlit](https://docs.chainlit.io/)を統合して最新のインタラクティブなUIを提供し、複数の大規模言語モデル (LLMs) とQdrantベクトルデータベースを組み合わせることで、プロフェッショナルなセキュリティログ分析とRAG (検索拡張生成) アプリケーションを実現しています。
+
+<div align="center">
+  <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800">
+</div>
 
 ## 使用技術
 
@@ -39,13 +43,13 @@
 ## コアコンポーネント
 
 1. **フロントエンドインターフェース**: Chainlit (`main.py`) を使用して会話形式のAIインターフェースを構築し、リアルタイムでのテキストストリーミングとチャット履歴をサポートします。
-2. **多言語サポート**: **Llama-3-Taiwan-8B-Instruct** を通じて、意図の分類、多言語理解、および翻訳を処理します。**英語、中国語、日本語**に最適化されています。
+2. **多言語サポート**: **Llama-3-Taiwan-8B-Instruct** を通じて、意図の分類、多言語理解、および翻訳を処理します。**英語、中国語、日本語、スペイン語、韓国語、タイ語、ベトナム語、ヒンディー語**に最適化されています。
 3. **セキュリティエキスパート**: サイバーセキュリティ領域に特化してファインチューニングされた**Foundation-Sec-8B**により、詳細なシステムおよびセキュリティログ分析を実行します。
 4. **ハードウェアアクセラレーションと微調整**: macOS Metal (MPS) と `llama-cpp-python` を統合。`.env` を介して **GPUレイヤーのオフロード** や **コンテキストウィンドウ (KVキャッシュ)** サイズを手動で調整でき、M2/M3チップのリソース使用バランスを最適化できます。
 5. **ベクトル検索 (RAG)**: Docker経由でデプロイされた**Qdrant**を使用して、セキュリティ・プレイブックを保存・検索します。起動時の**自動RAG同期**機能を搭載しました。
 6. **オブザーバビリティとトレース**: **Langfuse** および **Arize Phoenix** と統合し、詳細なトレース監査、AI応答品質の監視、およびシステム全体の **Structlog** ログを提供します。
 7. **パフォーマンス監視とフローティングHUD**: ASITOPスタイルのHUD (Streamlit) によるリアルタイム監視に **GraphQLサブスクリプション** を利用。 「PerfMon」と「History」パネルをフローティング表示可能。
-8. **UI/UXの洗練**: 画面上部中央の**言語セレクター**により、国旗アイコン付きで EN、ZH、JA を瞬時に切り替えられます。
+8. **UI/UXの洗練**: 画面上部中央の**言語セレクター**により、国旗アイコン付きでサポートされている多言語を瞬時に切り替えられます。
 
 ## システム要件
 

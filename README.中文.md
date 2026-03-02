@@ -3,7 +3,7 @@
 
   # 🛡️ Native AI Security Assistant for Apple Silicon
   
-  *Cisco Foundation-Sec 8B • 雙語日誌分析 • RAG 強化手冊 • Metal 加速*
+  *Cisco Foundation-Sec 8B • 多語系日誌分析 • RAG 強化手冊 • Metal 加速*
 
   [![English](https://img.shields.io/badge/English-gray?style=for-the-badge)](README.md) [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-blue?style=for-the-badge)](README.中文.md) [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-gray?style=for-the-badge)](README.ja.md) [![Español](https://img.shields.io/badge/Espa%C3%B1ol-gray?style=for-the-badge)](README.es.md) [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-gray?style=for-the-badge)](README.ko.md) [![ไทย](https://img.shields.io/badge/%E0%B9%84%E0%B8%97%E0%B8%A2-gray?style=for-the-badge)](README.th.md) [![Tiếng Việt](https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-gray?style=for-the-badge)](README.vi.md) [![हिन्दी](https://img.shields.io/badge/%E0%A4%B9%E0%A4%BF%E0%A4%A3%E0%A5%8D%E0%A4%A6%E0%A5%80-gray?style=for-the-badge)](README.hi.md)
 
@@ -12,7 +12,11 @@
 
 ---
 
-本專案是一個運行在 macOS (Apple Silicon M 系列晶片) 上的多語系 (中文/英文/日文) 資安分析智慧助理。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，實現了專業的資安日誌分析與 RAG (檢索增強生成) 應用。
+本專案是一個運行在 macOS (Apple Silicon M 系列晶片) 上的多語系資安分析智慧助理，支援包括中文、英文、日文、西班牙文、韓文、泰文、越南文及印地文等。透過整合 [Chainlit](https://docs.chainlit.io/) 提供現代化的互動介面，並結合多個大型語言模型 (LLMs) 與 Qdrant 向量資料庫，實現了專業的資安日誌分析與 RAG (檢索增強生成) 應用。
+
+<div align="center">
+  <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800">
+</div>
 
 ## 開發工具與技術堆疊
 
@@ -39,13 +43,13 @@
 ## 核心專案元件
 
 1. **前端介面**: 使用 Chainlit (`main.py`) 構建對話式 AI 介面，支援即時文字串流與歷史對話。
-2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯，針對**中文、英文、日文**進行了特別優化。
+2. **多語系支援**: 透過 **Llama-3-Taiwan-8B-Instruct** 處理意圖分類、多語系理解與翻譯，針對**中文、英文、日文、西班牙文、韓文、泰文、越南文與印地文**進行了特別優化。
 3. **資安專家**: 透過專為網宇安全領域微調的 **Foundation-Sec-8B**，進行深度的系統與資安日誌分析。
 4. **硬體加速與微調**: 整合 macOS Metal (MPS) 與 `llama-cpp-python`。支援透過 `.env` 手動調校 **GPU 層級卸載 (GPU Layers)** 與 **上下文視窗 (KV Cache)** 大小，以在大容量統一記憶體 (M2/M3) 上平衡效能與資源占用。
 5. **向量檢索 (RAG)**: 使用 **Qdrant** (透過 Docker 部署) 儲存並檢索資安 SOP 文件。系統現在支援啟動時**自動 RAG 同步**。
 6. **可觀測性與追蹤 (Observability)**: 整合 **Langfuse** 與 **Arize Phoenix**，提供深入的對話軌跡審計、AI 反應質量監控以及全系統的 **Structlog** 結構化日誌。
 7. **效能監控與懸浮控制**: 透過 ASITOP 風格的 HUD (Streamlit) 使用 **GraphQL 訂閱** 進行硬體即時監控，並利用 InfluxDB v3 + Grafana 追蹤歷史趨勢。整合「PerfMon」與「History」懸浮按鈕。
-8. **優化使用體驗**: 位於畫面中央上方的**語系切換器**，支援國旗圖示，可快速在 EN、ZH 與 JA 之間切換。
+8. **優化使用體驗**: 位於畫面中央上方的**語系切換器**，支援國旗圖示，可快速切換多國語言。
 
 ## 系統需求
 
