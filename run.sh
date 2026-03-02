@@ -1,4 +1,5 @@
 #!/bin/bash
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 set -e
 
 # Load environment variables from .env if present

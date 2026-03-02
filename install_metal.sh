@@ -1,4 +1,5 @@
 #!/bin/bash
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 
 # Exit immediately if a command exits with a non-zero status
 set -e

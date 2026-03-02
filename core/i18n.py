@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 import os
 import gettext
 from core.config import BASE_DIR

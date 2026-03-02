@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 set -e
 
 mkdir -p ./models

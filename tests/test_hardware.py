@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 import unittest
 from unittest.mock import patch, MagicMock
 from core.hardware import HardwareMonitor

@@ -1,3 +1,5 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
+
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"

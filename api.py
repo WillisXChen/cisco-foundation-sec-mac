@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 from chainlit.server import app as fastapi_app
 from strawberry.fastapi import GraphQLRouter
 from core.schema import schema

@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 import streamlit as st
 import asyncio
 from gql import Client, gql

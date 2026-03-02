@@ -1,3 +1,4 @@
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 import os
 from llama_cpp import Llama
 from core.config import (

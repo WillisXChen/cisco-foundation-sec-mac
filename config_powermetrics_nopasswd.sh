@@ -1,4 +1,5 @@
 #!/bin/bash
+# Maintainer: Willis Chen <misweyu2007@gmail.com>
 # This script adds powermetrics to /etc/sudoers.d/ to allow execution without a password.
 # This allows Chainlit to collect Apple Silicon power data in the background without
 # needing to run the entire server as root.
