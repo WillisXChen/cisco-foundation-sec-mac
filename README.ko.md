@@ -44,7 +44,7 @@
 
 1. **프론트엔드 인터페이스**: Chainlit(`main.py`)을 사용하여 대화형 AI 인터페이스를 구축하며, 실시간 텍스트 스트리밍과 채팅 기록을 지원합니다.
 2. **다국어 지원**: **Llama-3-Taiwan-8B-Instruct**를 통해 의도 분류, 다국어 이해 및 번역을 처리합니다. **영어**, **번체 중국어**, **일본어**, **스페인어**, **한국어**, **태국어**, **베트남어**, **힌디어**에 최적화되어 있습니다.
-3. **보안 전문가**: 사이버 보안 도메인에 특화되어 미세 조정된 **Foundation-Sec-8B**를 통해 심층적인 시스템 및 보안 로그 분석을 수행합니다.
+3. **보안 전문가**: 사이버 보안 도메인에 특화되어 미세 조정된 **Foundation-Sec-8B**를 통해 심층적인 시스템 및 보안 로그 분석을 수행합니다. 구조화되고 간결하며 실행 가능한 기술적 조언을 위한 **엔터프라이즈급 간결성(Conciseness)** 로직이 포함되어 있습니다.
 4. **하도웨어 가속 및 미세 조정**: macOS Metal(MPS)을 `llama-cpp-python`과 통합합니다. Mac Pro/Studio (M2/M3)에서 VRAM 사용량의 균형을 맞추기 위해 `.env`를 통한 **수동 GPU 레이어 오프로딩** 및 **컨텍스트 윈도우(KV 캐시) 조정**을 지원합니다.
 5. **벡터 검색 (RAG)**: 보안 플레이북을 저장하고 검색하기 위해 **Qdrant**(Docker를 통해 배포)를 사용합니다. 시작 시 **자동 RAG 동기화** 기능을 제공합니다.
 6. **관측 가능성 및 추적**: 심층 추적 감사, AI 응답 품질 모니터링 및 시스템 전반의 **Structlog** 로깅을 위해 **Langfuse** 및 **Arize Phoenix**와 통합되었습니다.
@@ -65,12 +65,16 @@
 .
 ├── core/                       # 핵심 시스템 로직 (LLM, 데이터베이스, 하드웨어, 설정)
 ├── models/                     # GGUF 모델 저장소 (Llama-3 및 Foundation-Sec)
+├── locales/                    # 다국어 번역 파일 (.po/.mo)
 ├── qdrant_storage/             # Qdrant 벡터 데이터베이스용 영구 저장소 디렉토리
 ├── influxdb3_storage/          # 메트릭용 영구 저장소
 ├── grafana_storage/            # Grafana 대시보드 저장소
+├── langfuse_db_storage/        # Langfuse 추적 데이터용 로컬 저장소
 ├── public/                     # 맞춤형 브랜드 자산 (로고, CSS, 테마)
 ├── main.py                     # 메인 Chainlit 애플리케이션 진입점
+├── api.py                      # GraphQL 및 맞춤형 API 엔드포인트
 ├── streamlit_app.py            # ASITOP HUD 모니터링 인터페이스
+├── health_check.py             # 시스템 전체 생태계 상태 점검 유틸리티
 ├── playbooks.json              # RAG 인제션을 위한 중앙 집중식 보안 SOP/플레이북
 ├── .env                        # 환경 변수 및 비밀 키
 ├── run.sh                      # 스마트 실행 스크립트 (설정 자동화)
@@ -138,6 +142,7 @@
 - **Arize Phoenix**: RAG 응답의 자동 평가 및 추적.
 - **ASITOP HUD**: GPU/CPU/RAM 모니터링을 위한 실시간 플로팅 HUD.
 - **Grafana**: 기록 성능 대시보드.
+- **시스템 상태 점검**: `python health_check.py`를 실행하여 전체 Docker/ML 생태계(Qdrant, InfluxDB, Grafana, Langfuse, Phoenix)의 상태를 확인합니다.
 
 ## 문제 해결
 

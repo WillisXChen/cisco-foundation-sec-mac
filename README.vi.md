@@ -44,7 +44,7 @@ Dự án này là một trợ lý thông minh phân tích bảo mật đa ngôn 
 
 1. **Giao diện Frontend**: Sử dụng Chainlit (`main.py`) để xây dựng giao diện AI đàm thoại, hỗ trợ truyền văn bản thời gian thực và lịch sử trò chuyện.
 2. **Hỗ trợ đa ngôn ngữ**: Xử lý phân loại ý định, hiểu đa ngôn ngữ và dịch thuật thông qua **Llama-3-Taiwan-8B-Instruct**. Được tối ưu hóa cho **Tiếng Anh**, **Tiếng Trung Phồn thể**, **Tiếng Nhật**, **Tiếng Tây Ban Nha**, **Tiếng Hàn**, **Tiếng Thái**, **Tiếng Việt** và **Tiếng Hindi**.
-3. **Chuyên gia bảo mật**: Thực hiện phân tích chuyên sâu log hệ thống và bảo mật thông qua **Foundation-Sec-8B**, được tinh chỉnh riêng cho lĩnh vực an ninh mạng.
+3. **Chuyên gia bảo mật**: Thực hiện phân tích chuyên sâu log hệ thống và bảo mật thông qua **Foundation-Sec-8B**, được tinh chỉnh riêng cho lĩnh vực an ninh mạng. Bao gồm logic **Ngắn gọn cấp Doanh nghiệp (Conciseness)** để đưa ra lời khuyên kỹ thuật có cấu trúc, ngắn gọn và có thể hành động.
 4. **Tăng tốc phần cứng & Tinh chỉnh**: Tích hợp macOS Metal (MPS) với `llama-cpp-python`. Hỗ trợ **offloading GPU layer thủ công** và **điều chỉnh Context Window (KV Cache)** qua `.env` để cân bằng việc sử dụng VRAM trên Mac Pro/Studio (M2/M3).
 5. **Truy xuất vector (RAG)**: Sử dụng **Qdrant** (triển khai qua Docker) để lưu trữ và truy xuất các sách hướng dẫn bảo mật (playbooks). Hệ thống có **tự động đồng bộ RAG** khi khởi động.
 6. **Quan sát & Theo dõi**: Tích hợp với **Langfuse** và **Arize Phoenix** để kiểm tra sâu, giám sát chất lượng phản hồi AI và ghi nhật ký **Structlog** toàn hệ thống.
@@ -65,12 +65,16 @@ Dự án này là một trợ lý thông minh phân tích bảo mật đa ngôn 
 .
 ├── core/                       # Logic hệ thống cốt lõi (LLM, Database, Phần cứng, Config)
 ├── models/                     # Lưu trữ mô hình GGUF (Llama-3 và Foundation-Sec)
+├── locales/                    # Các tệp dịch thuật đa ngôn ngữ (.po/.mo)
 ├── qdrant_storage/             # Thư mục lưu trữ cố định cho Qdrant vector database
 ├── influxdb3_storage/          # Lưu trữ cố định cho metrics
 ├── grafana_storage/            # Lưu trữ dashboard Grafana
+├── langfuse_db_storage/        # Lưu trữ cục bộ cho dữ liệu theo dõi Langfuse
 ├── public/                     # Tài sản thương hiệu tùy chỉnh (logos, CSS, themes)
 ├── main.py                     # Điểm vào chính của ứng dụng Chainlit
+├── api.py                      # GraphQL & Các điểm cuối API tùy chỉnh
 ├── streamlit_app.py            # Giao diện giám sát ASITOP HUD
+├── health_check.py             # Tiện ích kiểm tra sức khỏe hệ sinh thái toàn hệ thống
 ├── playbooks.json              # Các SOP/Playbooks bảo mật tập trung để nạp vào RAG
 ├── .env                        # Biến môi trường và bí mật
 ├── run.sh                      # Script thực thi thông minh (tự động thiết lập)
@@ -138,6 +142,7 @@ Hệ thống được trang bị các công cụ quan sát chuyên nghiệp:
 - **Arize Phoenix**: Tự động đánh giá phản hồi RAG và theo dõi dấu vết.
 - **ASITOP HUD**: HUD thời gian thực để giám sát GPU/CPU/RAM.
 - **Grafana**: Dashboard hiệu suất lịch sử.
+- **Kiểm tra sức khỏe hệ thống**: Chạy `python health_check.py` để kiểm tra trạng thái của toàn bộ hệ sinh thái Docker/ML (Qdrant, InfluxDB, Grafana, Langfuse, Phoenix).
 
 ## Xử lý sự cố
 

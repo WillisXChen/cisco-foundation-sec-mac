@@ -44,7 +44,7 @@ Este proyecto es un asistente inteligente de análisis de seguridad multilingüe
 
 1. **Interfaz Frontend**: Utiliza Chainlit (`main.py`) para construir una interfaz de IA conversacional, que admite transmisión de texto en tiempo real e historial de chat.
 2. **Soporte multilingüe**: Maneja la clasificación de intenciones, la comprensión multilingüe y la traducción a través de **Llama-3-Taiwan-8B-Instruct**. Optimizado para **inglés**, **chino tradicional**, **japonés**, **español**, **coreano**, **tailandés**, **vietnamita** e **hindi**.
-3. **Experto en seguridad**: realiza un análisis profundo del sistema y de los registros de seguridad a través de **Foundation-Sec-8B**, ajustado específicamente para el dominio de la ciberseguridad.
+3. **Experto en seguridad**: realiza un análisis profundo del sistema y de los registros de seguridad a través de **Foundation-Sec-8B**, ajustado específicamente para el dominio de la ciberseguridad. Incluye lógica de **concisión de nivel empresarial** para asesoramiento técnico estructurado, breve y aplicable.
 4. **Aceleración y ajuste de hardware**: integra macOS Metal (MPS) con `llama-cpp-python`. Admite la **descarga manual de capas de GPU** y el **ajuste de la ventana de contexto (KV Cache)** a través de `.env` para equilibrar el uso de VRAM en Mac Pro/Studio (M2/M3).
 5. **Recuperación de vectores (RAG)**: utiliza **Qdrant** (implementado a través de Docker) para almacenar y recuperar libros de jugadas de seguridad. El sistema presenta **sincronización automática de RAG** al iniciarse.
 6. **Observabilidad y seguimiento**: integrado con **Langfuse** y **Arize Phoenix** para auditoría profunda de seguimiento, monitoreo de la calidad de respuesta de la IA y registro de **Structlog** en todo el sistema.
@@ -65,12 +65,16 @@ Este proyecto es un asistente inteligente de análisis de seguridad multilingüe
 .
 ├── core/                       # Lógica central del sistema (LLM, Base de datos, Hardware, Configuración)
 ├── models/                     # Almacenamiento de modelos GGUF (Llama-3 y Foundation-Sec)
+├── locales/                    # Archivos de traducción multilingüe (.po/.mo)
 ├── qdrant_storage/             # Directorio de almacenamiento persistente para la base de datos vectorial Qdrant
 ├── influxdb3_storage/          # Almacenamiento persistente para métricas
 ├── grafana_storage/            # Almacenamiento del tablero de Grafana
+├── langfuse_db_storage/        # Almacenamiento local para datos de seguimiento de Langfuse
 ├── public/                     # Activos de marca personalizados (logotipos, CSS, temas)
 ├── main.py                     # Punto de entrada principal de la aplicación Chainlit
+├── api.py                      # GraphQL y puntos finales de API personalizados
 ├── streamlit_app.py            # Interfaz de monitoreo HUD ASITOP
+├── health_check.py             # Utilidad de verificación del estado del ecosistema de todo el sistema
 ├── playbooks.json              # SOP de seguridad centralizados/Libros de jugadas para la ingesta de RAG
 ├── .env                        # Variables de entorno y secretos
 ├── run.sh                      # Script de ejecución inteligente (automatiza la configuración)
@@ -138,6 +142,7 @@ El sistema está equipado con herramientas de observabilidad de nivel empresaria
 - **Arize Phoenix**: Evaluación automática de respuestas RAG y seguimiento.
 - **ASITOP HUD**: HUD flotante en tiempo real para monitoreo de GPU/CPU/RAM.
 - **Grafana**: Tableros de rendimiento histórico.
+- **Verificación de estado del sistema**: ejecute `python health_check.py` para verificar el estado de todo el ecosistema de Docker/ML (Qdrant, InfluxDB, Grafana, Langfuse, Phoenix).
 
 ## Solución de problemas
 

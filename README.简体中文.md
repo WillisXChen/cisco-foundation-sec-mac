@@ -44,7 +44,7 @@
 
 1. **前端界面**: 使用 Chainlit (`main.py`) 构建对话式 AI 界面，支持实时文字流与历史对话。
 2. **多语系支持**: 通过 **Llama-3-Taiwan-8B-Instruct** 处理意图分类、多语系理解与翻译，针对**中文、英文、日文、西班牙文、韩文、泰文、越南文与印度文**进行了特别优化。
-3. **资安专家**: 通过专为网络安全领域微调的 **Foundation-Sec-8B**，进行深度的系统与资安日志分析。
+3. **资安专家**: 通过专为网络安全领域微调的 **Foundation-Sec-8B**，进行深度的系统与资安日志分析。具备**企业级简洁化 (Conciseness)** 逻辑，能提供结构化、精炼且具备行动建议的技术分析。
 4. **硬件加速与微调**: 整合 macOS Metal (MPS) 与 `llama-cpp-python`。支持通过 `.env` 手动调校 **GPU 层级卸载 (GPU Layers)** 与 **上下文窗口 (KV Cache)** 大小，以在大容量统一内存 (M2/M3) 上平衡性能与资源占用。
 5. **向量检索 (RAG)**: 使用 **Qdrant** (通过 Docker 部署) 存储并检索资安 SOP 文件。系统现在支持启动时**自动 RAG 同步**。
 6. **可观测性与追踪 (Observability)**: 整合 **Langfuse** 与 **Arize Phoenix**，提供深入的对话轨迹审计、AI 反应质量监控以及全系统的 **Structlog** 结构化日志。
@@ -65,12 +65,16 @@
 .
 ├── core/                       # 系统核心逻辑 (LLM 管理、数据库连接、硬件监控、配置文件)
 ├── models/                     # GGUF 模型存储目录 (Llama-3 与 Foundation-Sec)
+├── locales/                    # 多语系翻译文本 (.po/.mo)
 ├── qdrant_storage/             # Qdrant 向量数据库的持久化存储目录
 ├── influxdb3_storage/          # InfluxDB 指标存储目录
 ├── grafana_storage/            # Grafana 仪表板存储目录
+├── langfuse_db_storage/        # Langfuse 追踪数据的本地存储
 ├── public/                     # 自定义品牌资源 (Logo、CSS、主题设置)
 ├── main.py                     # Chainlit 主程序入口点
+├── api.py                      # GraphQL 与自定义 API 端点
 ├── streamlit_app.py            # ASITOP HUD 监控界面 (Streamlit)
+├── health_check.py             # 全系统生态系健康检查工具
 ├── playbooks.json              # 集中化的资安 SOP/Playbooks，供 RAG 导入使用
 ├── .env                        # 环境变量与机敏信息设置
 ├── run.sh                      # 智能化执行脚本 (自动完成设置)
@@ -138,6 +142,7 @@
 - **Arize Phoenix**: 自动评估 RAG 反应质量与追踪 (Evaluation)。
 - **ASITOP HUD**: 悬浮实时显示硬件 (GPU/CPU/RAM) 使用状态。
 - **Grafana**: 提供系统性能的历史趋势看板。
+- **生态系健康检查**: 执行 `python health_check.py` 以验证整个 Docker/ML 生态系（Qdrant, InfluxDB, Grafana, Langfuse, Phoenix）的运行状态。
 
 ## 疑难解答
 

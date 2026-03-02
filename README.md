@@ -44,7 +44,7 @@ This project is a multilingual security analysis smart assistant running on macO
 
 1. **Frontend Interface**: Uses Chainlit (`main.py`) to build a conversational AI interface, supporting real-time text streaming and chat history.
 2. **Multilingual Support**: Handles intent classification, multilingual understanding, and translation through **Llama-3-Taiwan-8B-Instruct**. Optimized for **English**, **Traditional Chinese**, **Japanese**, **Spanish**, **Korean**, **Thai**, **Vietnamese**, and **Hindi**.
-3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain.
+3. **Security Expert**: Performs in-depth system and security log analysis through **Foundation-Sec-8B**, fine-tuned specifically for the cybersecurity domain. Features **Enterprise-Grade Conciseness** logic for structured, brief, and actionable technical advice.
 4. **Hardware Acceleration & Fine-tuning**: Integrates macOS Metal (MPS) with `llama-cpp-python`. Supports manual **GPU layer offloading** and **Context Window (KV Cache) adjustment** via `.env` to balance VRAM usage on Mac Pro/Studio (M2/M3).
 5. **Vector Retrieval (RAG)**: Uses **Qdrant** (deployed via Docker) to store and retrieve security playbooks. The system features **automatic RAG synchronization** on startup.
 6. **Observability & Tracing**: Integrated with **Langfuse** and **Arize Phoenix** for deep trace auditing, AI response quality monitoring, and system-wide **Structlog** logging.
@@ -65,15 +65,19 @@ This project is a multilingual security analysis smart assistant running on macO
 .
 ├── core/                       # Core system logic (LLM, Database, Hardware, Config)
 ├── models/                     # GGUF model storage (Llama-3 and Foundation-Sec)
-├── qdrant_storage/             # Persistent storage directory for Qdrant vector database
+├── locales/                    # Multilingual translation files (.po/.mo)
+├── qdrant_storage/             # Persistent storage for Qdrant vector database
 ├── influxdb3_storage/          # Persistent storage for metrics
 ├── grafana_storage/            # Grafana dashboard storage
+├── langfuse_db_storage/        # Local storage for Langfuse tracing data
 ├── public/                     # Custom branding assets (logos, CSS, themes)
 ├── main.py                     # Main Chainlit application entry point
+├── api.py                      # GraphQL & Custom API endpoints
 ├── streamlit_app.py            # ASITOP HUD Monitoring interface
+├── health_check.py             # System-wide ecosystem health check utility
 ├── playbooks.json              # Centralized security SOPs/Playbooks for RAG ingestion
 ├── .env                        # Environment variables and secrets
-├── run.sh                      # Smart execution script (automates setup, skips re-compilation if ready)
+├── run.sh                      # Smart execution script (automates setup)
 └── (Other config files and scripts)
 ```
 
@@ -138,11 +142,12 @@ The system is equipped with enterprise-grade observability tools:
 - **Arize Phoenix**: Automatic evaluation of RAG responses and tracing.
 - **ASITOP HUD**: Floating real-time HUD for GPU/CPU/RAM monitoring.
 - **Grafana**: Historical performance dashboards.
+- **System Health Check**: Execute `python health_check.py` to verify the status of the entire Docker/ML ecosystem (Qdrant, InfluxDB, Grafana, Langfuse, Phoenix).
 ## Troubleshooting
 
-- **Qdrant fails to start**: Ensure Docker Desktop or Podman is currently running.
-- **`llama-cpp-python` compilation errors**: Usually caused by incomplete installation of Xcode Command Line Tools. Try running `xcode-select --install` manually.
-- **Out of memory / Frequent crashes**: Large language models consume significant system resources. Please close unnecessary background applications to reserve enough unified memory for MLX or MPS usage.
+-   **Qdrant fails to start**: Ensure Docker Desktop or Podman is currently running.
+-   **`llama-cpp-python` compilation errors**: Usually caused by incomplete installation of Xcode Command Line Tools. Try running `xcode-select --install` manually.
+-   **Out of memory / Frequent crashes**: Large language models consume significant system resources. Please close unnecessary background applications to reserve enough unified memory for MLX or MPS usage.
 
 ## Development and Advanced Features
 
