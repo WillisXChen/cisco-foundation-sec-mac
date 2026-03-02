@@ -15,6 +15,8 @@
 本项目是一个运行在 macOS (Apple Silicon M 系列芯片) 上的多语系资安分析智能助手，支持包括中文、英文、日文、西班牙文、韩文、泰文、越南文及印地文等。通过整合 [Chainlit](https://docs.chainlit.io/) 提供现代化的交互界面，并结合多个大型语言模型 (LLMs) 与 Qdrant 向量数据库，实现了专业的资安日志分析与 RAG (检索增强生成) 应用。
 
 <div align="center">
+  <img src="screenshots/dev-0.0.1/Apple%20Silicon-Prompt-Grasp-PerfPowMon.png" alt="性能监控" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
+  <br><br>
   <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
 </div>
 

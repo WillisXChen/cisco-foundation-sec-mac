@@ -15,6 +15,8 @@
 このプロジェクトは、macOS (Apple Silicon Mシリーズチップ) 上で動作する多言語セキュリティ分析スマートアシスタントです。英語、中国語、日本語、スペイン語、韓国語、タイ語、ベトナム語、ヒンディー語をサポートしています。[Chainlit](https://docs.chainlit.io/)を統合して最新のインタラクティブなUIを提供し、複数の大規模言語モデル (LLMs) とQdrantベクトルデータベースを組み合わせることで、プロフェッショナルなセキュリティログ分析とRAG (検索拡張生成) アプリケーションを実現しています。
 
 <div align="center">
+  <img src="screenshots/dev-0.0.1/Apple%20Silicon-Prompt-Grasp-PerfPowMon.png" alt="パフォーマンスモニター" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
+  <br><br>
   <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
 </div>
 

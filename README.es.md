@@ -15,6 +15,8 @@
 Este proyecto es un asistente inteligente de análisis de seguridad multilingüe (inglés/chino/japonés/español/coreano/tailandés/vietnamita/hindi) que se ejecuta en macOS (chips Apple Silicon serie M). Al integrar [Chainlit](https://docs.chainlit.io/) para brindar una interfaz interactiva moderna y combinar múltiples modelos de lenguaje grandes (LLM) con la base de datos vectorial Qdrant, logra un análisis de registros de seguridad profesional y aplicaciones RAG (Retrieval-Augmented Generation).
 
 <div align="center">
+  <img src="screenshots/dev-0.0.1/Apple%20Silicon-Prompt-Grasp-PerfPowMon.png" alt="Monitor de rendimiento" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
+  <br><br>
   <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
 </div>
 

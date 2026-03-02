@@ -15,6 +15,8 @@
 यह प्रोजेक्ट एक बहुभाषी (अंग्रेजी/चीनी/जापानी/स्पेनिश/कोरियाई/थाई/वियतनामी/हिंदी) सुरक्षा विश्लेषण स्मार्ट सहायक है जो macOS (Apple Silicon M-सीरीज चिप्स) पर चलता है। आधुनिक संवादात्मक इंटरफ़ेस प्रदान करने के लिए [Chainlit](https://docs.chainlit.io/) को एकीकृत करके, और कई बड़े भाषा मॉडल (LLMs) को Qdrant वेक्टर डेटाबेस के साथ जोड़कर, यह पेशेवर सुरक्षा लॉग विश्लेषण और RAG (Retrieval-Augmented Generation) अनुप्रयोगों को प्राप्त करता है।
 
 <div align="center">
+  <img src="screenshots/dev-0.0.1/Apple%20Silicon-Prompt-Grasp-PerfPowMon.png" alt="प्रदर्शन मॉनिटर" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
+  <br><br>
   <img src="screenshots/dev-0.0.1/AI-Cisco-Sec-8B.webp" alt="AI-Cisco-Sec-8B" width="800" style="border-radius: 10px; border: 1.2px solid rgba(0, 212, 255, 0.3); box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);">
 </div>
 
